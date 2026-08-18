@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WellnessConnect — Personalized Meal Plan Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .mp-wrap { max-width:1200px; margin:0 auto; padding:90px 24px 60px; position:relative; z-index:1; }
+    .mp-grid { display:grid; grid-template-columns:420px 1fr; gap:28px; align-items:start; }
+    @media(max-width:960px){ .mp-grid{grid-template-columns:1fr} }
+
+    /* WIZARD CARD */
+    .wizard-card { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-lg),var(--glow); }
+    .wizard-header { background:linear-gradient(135deg,#1a1040,#111830); padding:24px 28px; border-bottom:1px solid var(--border2); position:relative; overflow:hidden; }
+    .wizard-header::before { content:''; position:absolute; top:-40px; right:-40px; width:160px; height:160px; background:radial-gradient(circle,var(--primary-glow),transparent 70%); pointer-events:none; }
+    .wizard-title { font-size:20px; font-weight:800; margin-bottom:4px; }
+    .wizard-subtitle { font-size:13px; color:var(--muted); }
+
+    /* PROGRESS */
+    .progress-bar-wrap { padding:20px 28px 0; }
+    .progress-steps { display:flex; gap:0; margin-bottom:8px; }
+    .progress-step { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .ps-dot { width:28px; height:28px; border-radius:50%; background:var(--surface2); border:2px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--muted); transition:all .3s; position:relative; z-index:1; }
+    .ps-dot.active { background:var(--primary); border-color:var(--primary); color:#fff; box-shadow:0 0 12px var(--primary-glow); }
+    .ps-dot.done { background:var(--success); border-color:var(--success); color:#fff; }
+    .ps-label { font-size:10px; color:var(--muted); text-align:center; font-weight:600; }
+    .ps-label.active { color:var(--primary); }
+    .progress-line { flex:1; height:2px; background:var(--border2); margin-top:13px; transition:background .3s; }
+    .progress-line.done { background:var(--primary); }
+
+    /* STEPS */
+    .wizard-steps { padding:24px 28px; }
+    .wizard-step { display:none; animation:fadeIn .3s ease; }
+    .wizard-step.active { display:block; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+    .step-title { font-size:17px; font-weight:800; margin-bottom:6px; color:var(--text); }
+    .step-desc { font-size:13px; color:var(--muted); margin-bottom:22px; line-height:1.55; }
+
+    /* FORM ELEMENTS */
+    .mp-label { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; display:block; }
+    .mp-select { width:100%; padding:11px 14px; background:var(--surface2); border:1.5px solid var(--border2); border-radius:var(--radius-sm); font-family:var(--font); font-size:14px; color:var(--text); outline:none; transition:all .22s; margin-bottom:18px; }
+    .mp-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
+    .mp-select option { background:var(--surface2); }
+
+    /* RADIO CARDS */
+    .radio-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
+    .radio-card { padding:12px 14px; background:var(--surface2); border:1.5px solid var(--border2); border-radius:var(--radius-sm); cursor:pointer; transition:all .22s; display:flex; align-items:center; gap:10px; }
+    .radio-card:hover { border-color:rgba(124,109,250,.4); }
+    .radio-card.selected { background:var(--primary-light); border-color:var(--primary); box-shadow:0 0 12px var(--primary-glow); }
+    .radio-card input { display:none; }
+    .rc-icon { font-size:22px; flex-shrink:0; }
+    .rc-text { font-size:13px; font-weight:600; color:var(--text2); }
+    .rc-sub { font-size:11px; color:var(--muted); }
+
+    /* PILL BUTTONS (multi-select) */
+    .pill-group { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+    .pill { padding:7px 16px; border:1.5px solid var(--border2); border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; background:var(--surface2); color:var(--text2); transition:all .22s; user-select:none; }
+    .pill:hover { border-color:rgba(124,109,250,.4); color:var(--primary); }
+    .pill.selected { background:var(--primary-light); border-color:var(--primary); color:var(--primary); box-shadow:0 0 8px var(--primary-glow); }
+
+    /* CHECKBOX LIST */
+    .check-list { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+    .check-item { display:flex; align-items:center; gap:10px; font-size:13.5px; color:var(--text2); cursor:pointer; }
+    .check-item input { width:15px; height:15px; accent-color:var(--primary); cursor:pointer; }
+
+    /* TAG INPUT */
+    .tag-input-wrap { background:var(--surface2); border:1.5px solid var(--border2); border-radius:var(--radius-sm); padding:8px 12px; min-height:44px; display:flex; flex-wrap:wrap; gap:6px; cursor:text; transition:all .22s; margin-bottom:18px; }
+    .tag-input-wrap:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
+    .tag { padding:3px 10px; background:var(--primary-light); border:1px solid rgba(124,109,250,.3); border-radius:12px; font-size:12px; color:var(--primary); display:flex; align-items:center; gap:5px; font-weight:600; }
+    .tag-remove { cursor:pointer; color:var(--muted); font-size:14px; line-height:1; }
+    .tag-remove:hover { color:var(--danger); }
+    .tag-real-input { border:none; background:transparent; color:var(--text); font-family:var(--font); font-size:13px; outline:none; min-width:80px; flex:1; }
+    .tag-real-input::placeholder { color:var(--light); }
+
+    /* WIZARD NAV */
+    .wizard-nav { display:flex; gap:10px; padding:0 28px 24px; }
+    .wiz-btn-prev { padding:10px 22px; border:1.5px solid var(--border2); border-radius:var(--radius-sm); font-size:13.5px; font-weight:600; color:var(--muted); background:transparent; cursor:pointer; font-family:var(--font); transition:all .22s; }
+    .wiz-btn-prev:hover { border-color:var(--primary); color:var(--primary); }
+    .wiz-btn-next { flex:1; padding:12px; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:700; cursor:pointer; font-family:var(--font); transition:all .22s; box-shadow:0 4px 18px var(--primary-glow); }
+    .wiz-btn-next:hover { transform:translateY(-2px); box-shadow:0 8px 28px var(--primary-glow); }
+
+    /* SUMMARY CARDS */
+    .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
+    .summary-card { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:12px 14px; }
+    .summary-card .sc-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:3px; }
+    .summary-card .sc-val { font-size:13.5px; font-weight:600; color:var(--text2); }
+
+    /* GENERATE BUTTON */
+    .generate-btn { width:100%; padding:16px; background:linear-gradient(135deg,#22d3ee,#7c6dfa,#6254e0); color:#fff; border:none; border-radius:var(--radius-sm); font-size:16px; font-weight:800; cursor:pointer; font-family:var(--font); transition:all .3s; box-shadow:0 6px 30px rgba(124,109,250,.4); letter-spacing:.3px; position:relative; overflow:hidden; }
+    .generate-btn:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(124,109,250,.5); }
+    .generate-btn:active { transform:translateY(0); }
+    .generate-btn.loading { pointer-events:none; }
+    .generate-btn .btn-text { transition:opacity .2s; }
+    .generate-btn.loading .btn-text { opacity:0; }
+    .generate-btn .btn-loader { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:none; gap:6px; align-items:center; font-size:22px; }
+    .generate-btn.loading .btn-loader { display:flex; }
+    @keyframes foodSpin { 0%{content:'🥗'}25%{content:'🍳'}50%{content:'🥙'}75%{content:'🍲'}100%{content:'🥗'} }
+    .food-emoji { animation:foodBounce .6s ease-in-out infinite alternate; }
+    .food-emoji:nth-child(2) { animation-delay:.15s; }
+    .food-emoji:nth-child(3) { animation-delay:.3s; }
+    @keyframes foodBounce { from{transform:translateY(0)}to{transform:translateY(-8px)} }
+
+    /* DISCLAIMER */
+    .disclaimer-box { background:rgba(251,191,36,.06); border:1px solid rgba(251,191,36,.2); border-radius:var(--radius-sm); padding:12px 14px; font-size:12.5px; color:#c9a227; line-height:1.55; margin-bottom:18px; }
+
+    /* RIGHT PANEL — MEAL PLAN DISPLAY */
+    .plan-panel { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); min-height:600px; box-shadow:var(--shadow-lg); overflow:hidden; }
+    .plan-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; min-height:500px; padding:40px; text-align:center; }
+    .placeholder-visual { font-size:72px; margin-bottom:20px; filter:drop-shadow(0 0 20px rgba(124,109,250,.3)); animation:float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)} }
+    .plan-header { background:linear-gradient(135deg,#14183a,#0e1628); padding:24px 28px; border-bottom:1px solid var(--border2); display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+    .plan-header-title { font-size:18px; font-weight:800; flex:1; }
+    .plan-actions { display:flex; gap:8px; }
+    .plan-action-btn { padding:8px 16px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--font); transition:all .22s; border:none; }
+    .pa-save { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; box-shadow:0 0 14px var(--primary-glow); }
+    .pa-save:hover { transform:translateY(-2px); box-shadow:0 0 24px var(--primary-glow); }
+    .pa-regen { background:var(--surface2); color:var(--text2); border:1px solid var(--border2); }
+    .pa-regen:hover { background:var(--surface3); }
+
+    /* DAY TABS */
+    .day-tabs { display:flex; gap:4px; padding:16px 20px 0; overflow-x:auto; }
+    .day-tab { padding:7px 16px; border:1.5px solid var(--border2); border-radius:20px; font-size:12.5px; font-weight:700; cursor:pointer; background:transparent; color:var(--muted); transition:all .22s; font-family:var(--font); white-space:nowrap; flex-shrink:0; }
+    .day-tab.active, .day-tab:hover { background:var(--primary); color:#fff; border-color:var(--primary); box-shadow:0 0 12px var(--primary-glow); }
+
+    /* MEAL SECTIONS */
+    .plan-body { padding:20px; }
+    .meal-section { margin-bottom:16px; border:1px solid var(--border2); border-radius:var(--radius); overflow:hidden; transition:all .22s; }
+    .meal-section:hover { border-color:rgba(34,211,238,.3); box-shadow:0 0 20px rgba(34,211,238,.08); }
+    .meal-header { padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; background:var(--surface2); }
+    .meal-emoji { font-size:22px; flex-shrink:0; }
+    .meal-name { font-size:14px; font-weight:700; color:var(--text); flex:1; }
+    .meal-toggle { color:var(--muted); transition:transform .22s; font-size:16px; }
+    .meal-section.open .meal-toggle { transform:rotate(180deg); }
+    .meal-content { display:none; padding:16px 18px; background:var(--surface); border-top:1px solid var(--border); }
+    .meal-section.open .meal-content { display:block; }
+    .meal-item { margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+    .meal-item:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
+    .meal-item-name { font-size:14px; font-weight:700; color:var(--text); margin-bottom:3px; }
+    .meal-item-desc { font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:6px; }
+    .meal-tags { display:flex; flex-wrap:wrap; gap:5px; }
+    .meal-tag { padding:2px 8px; border-radius:8px; font-size:11px; font-weight:700; background:rgba(34,211,238,.1); color:var(--accent); border:1px solid rgba(34,211,238,.2); }
+
+    /* TIPS & HYDRATION */
+    .plan-tips { padding:0 20px 20px; }
+    .tips-card { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius); padding:18px; margin-bottom:14px; }
+    .tips-title { font-size:14px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+    .tip-row { display:flex; gap:10px; align-items:flex-start; margin-bottom:8px; font-size:13px; color:var(--text2); }
+    .tip-row:last-child { margin-bottom:0; }
+    .tip-dot { width:6px; height:6px; background:var(--primary); border-radius:50%; margin-top:5px; flex-shrink:0; }
+
+    /* SAVED PLANS MODAL */
+    .saved-btn { position:fixed; bottom:28px; left:28px; padding:10px 18px; background:var(--surface); border:1.5px solid var(--border2); border-radius:20px; font-size:13px; font-weight:600; color:var(--text2); cursor:pointer; font-family:var(--font); transition:all .22s; z-index:100; box-shadow:var(--shadow); }
+    .saved-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+
+    @media(max-width:640px){
+      .radio-cards{grid-template-columns:1fr}
+      .summary-grid{grid-template-columns:1fr}
+      .mp-wrap{padding:84px 14px 40px}
+    }
+  </style>
+</head>
+<body>
+<canvas id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
+
+<!-- HEADER -->
+<header class="header" id="header">
+  <div class="container nav-container">
+    <a href="index.html" class="logo" style="text-decoration:none">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" width="40" height="40">
+          <circle cx="20" cy="20" r="20" fill="#4f7dff"/>
+          <path d="M20 10C14 10 10 14.5 10 19.5C10 25 14 28 20 33C26 28 30 25 30 19.5C30 14.5 26 10 20 10Z" fill="white" opacity="0.9"/>
+          <rect x="18.5" y="15" width="3" height="9" rx="1.5" fill="#4f7dff"/>
+          <rect x="15" y="18.5" width="10" height="3" rx="1.5" fill="#4f7dff"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-main">WellnessConnect</span>
+        <span class="logo-sub">Student Health Assistant</span>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html" class="nav-link">Chat</a>
+      <a href="resources.html" class="nav-link">Resources</a>
+      <a href="index.html" class="nav-link">Book</a>
+      <a href="helplines.html" class="nav-link">Helplines</a>
+      <a href="ai-assistant.html" class="nav-link">🤖 AI Assistant</a>
+      <a href="meal-plan.html" class="nav-link active">🥗 Meal Plan</a>
+      <a href="wellness-dashboard.html" class="nav-link">📊 Dashboard</a>
+    </nav>
+    <div class="nav-right">
+      <a href="register.html" class="register-nav-btn">✨ Account</a>
+      <button class="emergency-btn" onclick="window.location.href='helplines.html'">🆘 Emergency</button>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<div class="mp-wrap">
+  <!-- PAGE HERO -->
+  <div style="text-align:center;margin-bottom:36px">
+    <div class="hero-badge" style="display:inline-flex;margin-bottom:16px">🥗 Personalized Wellness Nutrition</div>
+    <h1 style="font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-1px;margin-bottom:10px">
+      Your <span class="gradient-text">Meal Plan</span> Generator
+    </h1>
+    <p style="font-size:15px;color:var(--muted);max-width:520px;margin:0 auto;line-height:1.7">
+      Answer a few quick questions and get a personalized, balanced meal plan tailored to your lifestyle and preferences.
+    </p>
+  </div>
+
+  <div class="mp-grid">
+    <!-- ══ LEFT: WIZARD ══ -->
+    <div class="wizard-card">
+      <div class="wizard-header">
+        <div class="wizard-title">🌿 Build Your Meal Plan</div>
+        <div class="wizard-subtitle">5 simple steps · Takes about 2 minutes</div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="progress-bar-wrap">
+        <div class="progress-steps" id="progressSteps">
+          <div class="progress-step">
+            <div class="ps-dot active" id="dot-1">1</div>
+            <div class="ps-label active" id="lbl-1">About You</div>
+          </div>
+          <div class="progress-line" id="line-1"></div>
+          <div class="progress-step">
+            <div class="ps-dot" id="dot-2">2</div>
+            <div class="ps-label" id="lbl-2">Food Prefs</div>
+          </div>
+          <div class="progress-line" id="line-2"></div>
+          <div class="progress-step">
+            <div class="ps-dot" id="dot-3">3</div>
+            <div class="ps-label" id="lbl-3">Health</div>
+          </div>
+          <div class="progress-line" id="line-3"></div>
+          <div class="progress-step">
+            <div class="ps-dot" id="dot-4">4</div>
+            <div class="ps-label" id="lbl-4">Schedule</div>
+          </div>
+          <div class="progress-line" id="line-4"></div>
+          <div class="progress-step">
+            <div class="ps-dot" id="dot-5">5</div>
+            <div class="ps-label" id="lbl-5">Review</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-steps">
+        <!-- STEP 1 -->
+        <div class="wizard-step active" id="step-1">
+          <div class="step-title">About You</div>
+          <div class="step-desc">Tell us a little about yourself so we can make suitable suggestions.</div>
+
+          <label class="mp-label">Age Range</label>
+          <select class="mp-select" id="f-age">
+            <option value="">Select age range…</option>
+            <option value="under18">Under 18</option>
+            <option value="18-25" selected>18–25</option>
+            <option value="26-35">26–35</option>
+            <option value="36-50">36–50</option>
+            <option value="50+">50+</option>
+          </select>
+
+          <label class="mp-label">Activity Level</label>
+          <div class="radio-cards" id="activityCards">
+            <label class="radio-card selected" onclick="selectCard(this,'activity','sedentary')">
+              <input type="radio" name="activity" value="sedentary" checked/>
+              <span class="rc-icon">🧘</span>
+              <div><div class="rc-text">Sedentary</div><div class="rc-sub">Mostly sitting</div></div>
+            </label>
+            <label class="radio-card" onclick="selectCard(this,'activity','light')">
+              <input type="radio" name="activity" value="light"/>
+              <span class="rc-icon">🚶</span>
+              <div><div class="rc-text">Light</div><div class="rc-sub">Some walking</div></div>
+            </label>
+            <label class="radio-card" onclick="selectCard(this,'activity','active')">
+              <input type="radio" name="activity" value="active"/>
+              <span class="rc-icon">🏃</span>
+              <div><div class="rc-text">Active</div><div class="rc-sub">Regular exercise</div></div>
+            </label>
+            <label class="radio-card" onclick="selectCard(this,'activity','very_active')">
+              <input type="radio" name="activity" value="very_active"/>
+              <span class="rc-icon">💪</span>
+              <div><div class="rc-text">Very Active</div><div class="rc-sub">Daily training</div></div>
+            </label>
+          </div>
+
+          <label class="mp-label">Wellness Goal</label>
+          <select class="mp-select" id="f-goal">
+            <option value="general" selected>General wellness &amp; balanced nutrition</option>
+            <option value="energy">More energy throughout the day</option>
+            <option value="sleep">Better sleep quality</option>
+            <option value="stress">Stress management &amp; calm</option>
+            <option value="strength">Build strength &amp; fitness</option>
+            <option value="digestion">Improve digestion &amp; gut health</option>
+          </select>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="wizard-step" id="step-2">
+          <div class="step-title">Food Preferences</div>
+          <div class="step-desc">Help us understand what you enjoy eating.</div>
+
+          <label class="mp-label">Diet Type (select all that apply)</label>
+          <div class="pill-group" id="dietPills">
+            <span class="pill selected" data-val="vegetarian" onclick="togglePill(this)">🥬 Vegetarian</span>
+            <span class="pill" data-val="non-vegetarian" onclick="togglePill(this)">🍖 Non-Vegetarian</span>
+            <span class="pill" data-val="vegan" onclick="togglePill(this)">🌱 Vegan</span>
+            <span class="pill" data-val="pescatarian" onclick="togglePill(this)">🐟 Pescatarian</span>
+            <span class="pill" data-val="eggetarian" onclick="togglePill(this)">🥚 Eggetarian</span>
+          </div>
+
+          <label class="mp-label">Cuisine Preferences</label>
+          <div class="pill-group" id="cuisinePills">
+            <span class="pill selected" data-val="north_indian" onclick="togglePill(this)">🍛 North Indian</span>
+            <span class="pill" data-val="south_indian" onclick="togglePill(this)">🥥 South Indian</span>
+            <span class="pill" data-val="gujarati" onclick="togglePill(this)">🫙 Gujarati</span>
+            <span class="pill" data-val="bengali" onclick="togglePill(this)">🐟 Bengali</span>
+            <span class="pill" data-val="continental" onclick="togglePill(this)">🥗 Continental</span>
+            <span class="pill" data-val="mediterranean" onclick="togglePill(this)">🫒 Mediterranean</span>
+          </div>
+
+          <label class="mp-label">Foods You Love (type &amp; press Enter)</label>
+          <div class="tag-input-wrap" id="loveWrap" onclick="document.getElementById('loveInput').focus()">
+            <input class="tag-real-input" id="loveInput" placeholder="e.g. Dal, Rice, Paneer…" onkeydown="handleTagInput(event,'loveWrap','loveTags')"/>
+          </div>
+
+          <label class="mp-label">Foods to Avoid</label>
+          <div class="tag-input-wrap" id="avoidWrap" onclick="document.getElementById('avoidInput').focus()">
+            <input class="tag-real-input" id="avoidInput" placeholder="e.g. Onion, Garlic…" onkeydown="handleTagInput(event,'avoidWrap','avoidTags')"/>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="wizard-step" id="step-3">
+          <div class="step-title">Health Considerations</div>
+          <div class="step-desc">Optional — helps us suggest suitable foods. For medical dietary needs, consult your doctor.</div>
+
+          <label class="mp-label">Allergies (select all that apply)</label>
+          <div class="check-list">
+            <label class="check-item"><input type="checkbox" class="allergy-cb" value="none" checked/> None / Not sure</label>
+            <label class="check-item"><input type="checkbox" class="allergy-cb" value="gluten"/> Gluten</label>
+            <label class="check-item"><input type="checkbox" class="allergy-cb" value="dairy"/> Dairy / Lactose</label>
+            <label class="check-item"><input type="checkbox" class="allergy-cb" value="nuts"/> Tree Nuts &amp; Peanuts</label>
+            <label class="check-item"><input type="checkbox" class="allergy-cb" value="eggs"/> Eggs</label>
+            <label class="check-item"><input type="checkbox" class="allergy-cb" value="soy"/> Soy</label>
+          </div>
+
+          <label class="mp-label">Any relevant health context? (optional)</label>
+          <div class="check-list">
+            <label class="check-item"><input type="checkbox" class="health-cb" value="diabetes"/> Diabetes-friendly preference</label>
+            <label class="check-item"><input type="checkbox" class="health-cb" value="bp"/> Blood pressure management</label>
+            <label class="check-item"><input type="checkbox" class="health-cb" value="pcos"/> PCOS / PCOD</label>
+            <label class="check-item"><input type="checkbox" class="health-cb" value="thyroid"/> Thyroid condition</label>
+            <label class="check-item"><input type="checkbox" class="health-cb" value="ibs"/> IBS / Sensitive digestion</label>
+          </div>
+
+          <div class="disclaimer-box">⚠️ This information is used only to suggest suitable general foods. It is <strong>not</strong> a medical dietary plan. Always consult a qualified healthcare professional or registered dietitian for medical dietary needs.</div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="wizard-step" id="step-4">
+          <div class="step-title">Your Daily Schedule</div>
+          <div class="step-desc">We'll time your meals to suit your routine.</div>
+
+          <label class="mp-label">Typical Wake-Up Time</label>
+          <select class="mp-select" id="f-wakeup">
+            <option value="5am">Before 6 AM (Early riser)</option>
+            <option value="6am">6:00 – 7:00 AM</option>
+            <option value="7am" selected>7:00 – 8:00 AM</option>
+            <option value="8am">8:00 – 9:00 AM</option>
+            <option value="9am">After 9 AM (Late riser)</option>
+          </select>
+
+          <label class="mp-label">Meal Frequency</label>
+          <div class="radio-cards">
+            <label class="radio-card" onclick="selectCard(this,'mealfreq','3meals')">
+              <input type="radio" name="mealfreq" value="3meals"/>
+              <span class="rc-icon">🍽️</span>
+              <div><div class="rc-text">3 Meals/day</div></div>
+            </label>
+            <label class="radio-card selected" onclick="selectCard(this,'mealfreq','3plus2')">
+              <input type="radio" name="mealfreq" value="3plus2" checked/>
+              <span class="rc-icon">🥗</span>
+              <div><div class="rc-text">3 meals + 2 snacks</div></div>
+            </label>
+            <label class="radio-card" onclick="selectCard(this,'mealfreq','small6')">
+              <input type="radio" name="mealfreq" value="small6"/>
+              <span class="rc-icon">🥢</span>
+              <div><div class="rc-text">5–6 small meals</div></div>
+            </label>
+            <label class="radio-card" onclick="selectCard(this,'mealfreq','if')">
+              <input type="radio" name="mealfreq" value="if"/>
+              <span class="rc-icon">⏱️</span>
+              <div><div class="rc-text">Intermittent 16:8</div></div>
+            </label>
+          </div>
+
+          <label class="mp-label">Cooking Access</label>
+          <div class="radio-cards">
+            <label class="radio-card selected" onclick="selectCard(this,'cooking','home')">
+              <input type="radio" name="cooking" value="home" checked/>
+              <span class="rc-icon">🍳</span>
+              <div><div class="rc-text">Home-cooked</div></div>
+            </label>
+            <label class="radio-card" onclick="selectCard(this,'cooking','mixed')">
+              <input type="radio" name="cooking" value="mixed"/>
+              <span class="rc-icon">🏠🏢</span>
+              <div><div class="rc-text">Mix of both</div></div>
+            </label>
+            <label class="radio-card" onclick="selectCard(this,'cooking','canteen')">
+              <input type="radio" name="cooking" value="canteen"/>
+              <span class="rc-icon">🏫</span>
+              <div><div class="rc-text">Canteen / Outside</div></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- STEP 5 — REVIEW -->
+        <div class="wizard-step" id="step-5">
+          <div class="step-title">Review &amp; Generate ✨</div>
+          <div class="step-desc">Here's what we'll use to create your plan. Click generate when ready!</div>
+          <div class="summary-grid" id="summaryGrid"></div>
+          <div class="disclaimer-box">🌿 This will generate a <strong>general wellness meal plan</strong> — not a medical prescription. The AI may make suggestions based on your inputs. Always consult a healthcare professional for specific medical dietary needs.</div>
+          <button class="generate-btn" id="generateBtn" onclick="generatePlan()">
+            <span class="btn-text">🌿 Generate My Personalized Meal Plan</span>
+            <div class="btn-loader">
+              <span class="food-emoji">🥗</span>
+              <span class="food-emoji">🍳</span>
+              <span class="food-emoji">🥙</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- WIZARD NAV BUTTONS -->
+      <div class="wizard-nav">
+        <button class="wiz-btn-prev" id="btnPrev" onclick="changeStep(-1)" style="display:none">← Back</button>
+        <button class="wiz-btn-next" id="btnNext" onclick="changeStep(1)">Next Step →</button>
+      </div>
+    </div>
+
+    <!-- ══ RIGHT: PLAN DISPLAY ══ -->
+    <div class="plan-panel" id="planPanel">
+      <div class="plan-placeholder" id="planPlaceholder">
+        <div class="placeholder-visual">🥗</div>
+        <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">Your plan will appear here</h2>
+        <p style="font-size:14px;color:var(--muted);max-width:280px;line-height:1.6">Complete the 5-step form and click "Generate" to create your personalized wellness meal plan.</p>
+        <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;justify-content:center">
+          <div style="padding:10px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;color:var(--muted);text-align:center">🌅 Breakfast ideas</div>
+          <div style="padding:10px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;color:var(--muted);text-align:center">🍱 Lunch options</div>
+          <div style="padding:10px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;color:var(--muted);text-align:center">🌙 Dinner plans</div>
+          <div style="padding:10px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;color:var(--muted);text-align:center">🍎 Healthy snacks</div>
+        </div>
+      </div>
+      <div id="planContent" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SAVED PLANS BUTTON -->
+<button class="saved-btn" onclick="showSavedPlans()">📚 Saved Plans (<span id="savedCount">0</span>)</button>
+
+<!-- SAVED PLANS MODAL -->
+<div class="modal-overlay" id="savedModal" style="display:none">
+  <div class="modal modal-large" style="max-width:560px;text-align:left">
+    <button class="modal-close" onclick="document.getElementById('savedModal').style.display='none'">✕</button>
+    <h3 style="margin-bottom:20px">📚 Saved Meal Plans</h3>
+    <div id="savedPlansList"></div>
+  </div>
+</div>
+
+<footer class="footer" style="position:relative;z-index:1">
+  <div class="footer-bottom" style="text-align:center;padding:18px 24px;font-size:12.5px;color:var(--light);border-top:1px solid var(--border)">
+    <p>© 2025 WellnessConnect · <a href="index.html">Home</a> · <a href="ai-assistant.html">AI Assistant</a> · <a href="wellness-dashboard.html">Dashboard</a> · Confidential & Secure</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+'use strict';
+
+/* ── STATE ── */
+let currentStep = 1;
+const TOTAL_STEPS = 5;
+const loveTags = [], avoidTags = [];
+let generatedPlan = null;
+let activeDay = 'monday';
+
+/* ── STEP NAVIGATION ── */
+function changeStep(dir) {
+  const next = currentStep + dir;
+  if (next < 1 || next > TOTAL_STEPS) return;
+  if (next === TOTAL_STEPS) buildSummary();
+  document.getElementById('step-' + currentStep).classList.remove('active');
+  currentStep = next;
+  document.getElementById('step-' + currentStep).classList.add('active');
+  updateProgress();
+  document.getElementById('btnPrev').style.display = currentStep > 1 ? 'inline-flex' : 'none';
+  document.getElementById('btnNext').style.display = currentStep < TOTAL_STEPS ? 'inline-flex' : 'none';
+  if (currentStep === TOTAL_STEPS) document.getElementById('btnNext').style.display = 'none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateProgress() {
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const dot = document.getElementById('dot-' + i);
+    const lbl = document.getElementById('lbl-' + i);
+    const line = document.getElementById('line-' + i);
+    dot.classList.remove('active','done');
+    lbl.classList.remove('active');
+    if (line) line.classList.remove('done');
+    if (i < currentStep) { dot.classList.add('done'); dot.textContent = '✓'; if(line) line.classList.add('done'); }
+    else if (i === currentStep) { dot.classList.add('active'); dot.textContent = i; lbl.classList.add('active'); }
+    else { dot.textContent = i; }
+  }
+}
+
+/* ── RADIO CARDS ── */
+function selectCard(el, name, val) {
+  el.closest('.radio-cards').querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ── PILL TOGGLE ── */
+function togglePill(el) { el.classList.toggle('selected'); }
+
+/* ── TAG INPUT ── */
+function handleTagInput(e, wrapId, tagsArr) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const input = e.target;
+    const val = input.value.trim().replace(',','');
+    if (!val) return;
+    const arr = tagsArr === 'loveTags' ? loveTags : avoidTags;
+    if (arr.includes(val)) return;
+    arr.push(val);
+    const wrap = document.getElementById(wrapId);
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = `${val} <span class="tag-remove" onclick="removeTag(this,'${tagsArr}','${val}')">×</span>`;
+    wrap.insertBefore(tag, input);
+    input.value = '';
+  }
+}
+function removeTag(el, tagsArr, val) {
+  const arr = tagsArr === 'loveTags' ? loveTags : avoidTags;
+  const idx = arr.indexOf(val);
+  if (idx > -1) arr.splice(idx, 1);
+  el.parentElement.remove();
+}
+
+/* ── COLLECT FORM DATA ── */
+function collectFormData() {
+  const age = document.getElementById('f-age').value || '18-25';
+  const activity = document.querySelector('input[name="activity"]:checked')?.value || 'sedentary';
+  const goal = document.getElementById('f-goal').value || 'general';
+  const diet = [...document.querySelectorAll('#dietPills .pill.selected')].map(p => p.dataset.val).join(', ') || 'vegetarian';
+  const cuisine = [...document.querySelectorAll('#cuisinePills .pill.selected')].map(p => p.dataset.val).join(', ') || 'north_indian';
+  const allergies = [...document.querySelectorAll('.allergy-cb:checked')].map(c => c.value).join(', ') || 'none';
+  const health = [...document.querySelectorAll('.health-cb:checked')].map(c => c.value).join(', ') || 'none';
+  const wakeup = document.getElementById('f-wakeup').value || '7am';
+  const mealfreq = document.querySelector('input[name="mealfreq"]:checked')?.value || '3plus2';
+  const cooking = document.querySelector('input[name="cooking"]:checked')?.value || 'home';
+  const loves = loveTags.join(', ') || 'flexible';
+  const avoids = avoidTags.join(', ') || 'none';
+  return { age, activity, goal, diet, cuisine, allergies, health, wakeup, mealfreq, cooking, loves, avoids };
+}
+
+/* ── BUILD SUMMARY ── */
+function buildSummary() {
+  const d = collectFormData();
+  const GOAL_MAP = { general:'General Wellness', energy:'More Energy', sleep:'Better Sleep', stress:'Stress Management', strength:'Build Strength', digestion:'Improve Digestion' };
+  const ACT_MAP = { sedentary:'Sedentary 🧘', light:'Lightly Active 🚶', active:'Active 🏃', very_active:'Very Active 💪' };
+  const FREQ_MAP = { '3meals':'3 Meals/day', '3plus2':'3 Meals + 2 Snacks', small6:'5–6 Small Meals', if:'Intermittent (16:8)' };
+  const grid = document.getElementById('summaryGrid');
+  const items = [
+    ['Age Range', d.age], ['Activity', ACT_MAP[d.activity]||d.activity],
+    ['Goal', GOAL_MAP[d.goal]||d.goal], ['Diet', d.diet],
+    ['Cuisine', d.cuisine], ['Allergies', d.allergies],
+    ['Wake-up', d.wakeup], ['Meal Freq', FREQ_MAP[d.mealfreq]||d.mealfreq],
+    ['Foods loved', d.loves || '—'], ['Foods avoided', d.avoids || '—'],
+  ];
+  grid.innerHTML = items.map(([l,v])=>`<div class="summary-card"><div class="sc-label">${l}</div><div class="sc-val">${v}</div></div>`).join('');
+}
+
+/* ── GENERATE PLAN ── */
+async function generatePlan() {
+  const btn = document.getElementById('generateBtn');
+  btn.classList.add('loading');
+  const d = collectFormData();
+
+  const prompt = `You are a wellness nutrition advisor creating a healthy, balanced, non-restrictive meal plan for a student.
+
+Student profile:
+- Age: ${d.age}
+- Activity level: ${d.activity}
+- Wellness goal: ${d.goal}
+- Diet type: ${d.diet}
+- Cuisine preference: ${d.cuisine}
+- Allergies: ${d.allergies}
+- Health context: ${d.health}
+- Wake-up time: ${d.wakeup}
+- Meal frequency: ${d.mealfreq}
+- Cooking access: ${d.cooking}
+- Foods loved: ${d.loves}
+- Foods to avoid: ${d.avoids}
+
+Create a 7-day healthy meal plan (Monday to Sunday) with:
+- Breakfast (2 options)
+- Mid-morning snack
+- Lunch (2 options)
+- Evening snack
+- Dinner (2 options)
+- Daily hydration tip
+- 3 general wellness tips for their goal
+
+Format: Use clear headings for each day. Under each meal time, list options with a brief description.
+Use Indian food names where appropriate. Keep it practical, budget-friendly for students.
+Focus on balanced nutrition, not calorie counting.
+Include a variety of foods across the week.
+
+IMPORTANT: Never count calories, never suggest weight loss explicitly, focus on nourishment and energy. End with a disclaimer.`;
+
+  let reply = null;
+  try { reply = await callGeminiAPI(prompt); } catch(e) {}
+
+  if (!reply) reply = getLocalMealPlan(d);
+
+  generatedPlan = { preferences: d, plan: reply, date: new Date().toISOString() };
+  btn.classList.remove('loading');
+  renderPlan(reply, d);
+}
+
+/* ── LOCAL FALLBACK MEAL PLAN ── */
+function getLocalMealPlan(d) {
+  const isVeg = d.diet.includes('veg') || !d.diet.includes('non-veg');
+  const protein = isVeg ? 'paneer, dal, rajma, chana, tofu, soya' : 'eggs, chicken, fish, dal, rajma';
+  return `## Your Personalized Wellness Meal Plan 🌿
+
+*Based on your ${d.diet} preference and ${d.goal} goal.*
+
+---
+
+### Monday
+**🌅 Breakfast Options:**
+- Option 1: Poha with vegetables + 1 glass warm water with lemon + seasonal fruit
+- Option 2: Whole wheat toast (2 slices) + peanut butter + banana + herbal tea
+
+**☀️ Mid-Morning Snack:** A handful of mixed nuts + 1 fruit OR roasted makhana
+
+**🍱 Lunch Options:**
+- Option 1: Dal + sabzi + 2 roti + salad + curd
+- Option 2: Brown rice + rajma/chana + cucumber raita + green salad
+
+**🍵 Evening Snack:** Sprouts chaat OR fruit with a pinch of chaat masala + green tea
+
+**🌙 Dinner Options:**
+- Option 1: Khichdi with vegetables + pickle + curd (light, easy to digest)
+- Option 2: 2 roti + sabzi + small bowl of dal
+
+---
+
+### Tuesday
+**🌅 Breakfast Options:**
+- Option 1: Idli (3–4) + sambar + coconut chutney + 1 glass water
+- Option 2: Upma with vegetables + 1 boiled egg (if non-veg) OR paneer bhurji
+
+**☀️ Mid-Morning Snack:** Buttermilk (chaas) + roasted chana
+
+**🍱 Lunch Options:**
+- Option 1: Veg pulao + raita + salad + papad
+- Option 2: Chole + 2 roti + kachumber salad
+
+**🍵 Evening Snack:** Peanut chikki or dates + a few walnuts
+
+**🌙 Dinner:** Palak dal + 2 roti + stir-fried vegetables
+
+---
+
+### Wednesday
+**🌅 Breakfast Options:**
+- Option 1: Oatmeal with banana + a handful of seeds + milk or plant milk
+- Option 2: Besan chilla (2–3) + green chutney + curd
+
+**☀️ Mid-Morning Snack:** Seasonal fruit + a small handful of cashews
+
+**🍱 Lunch Options:**
+- Option 1: Egg rice / Veg fried rice + soya stir-fry
+- Option 2: Moong dal khichdi + ghee + pickle + salad
+
+**🍵 Evening Snack:** Whole wheat biscuits + masala chai OR fruit smoothie
+
+**🌙 Dinner:** Tofu/paneer sabzi + 2 roti + light soup
+
+---
+
+*(Days Thursday–Sunday follow a similar rotation with seasonal variety)*
+
+---
+
+### 💧 Hydration
+- Drink 8–10 glasses of water daily
+- Start your morning with a glass of warm water
+- Carry a water bottle to college
+- Limit sugary drinks and excessive caffeine
+
+### ✨ Wellness Tips for Your Goal (${d.goal}):
+1. **Eat regularly** — don't skip meals, especially breakfast
+2. **Include protein** at every meal (${protein}) to maintain energy
+3. **Colorful vegetables** — aim for at least 2 colors on your plate each meal
+4. **Mindful eating** — eat without screens, chew slowly
+5. **Prepare simple** — keep boiled eggs/paneer/sprouts ready for quick meals
+
+---
+
+*⚠️ Disclaimer: This is general wellness information and is not a medical or dietary prescription. If you have allergies, medical conditions, or specific nutritional needs, please consult a qualified healthcare professional or registered dietitian.*`;
+}
+
+/* ── RENDER PLAN ── */
+function renderPlan(planText, prefs) {
+  const placeholder = document.getElementById('planPlaceholder');
+  const content = document.getElementById('planContent');
+  placeholder.style.display = 'none';
+  content.style.display = 'block';
+
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const user = JSON.parse(localStorage.getItem('wc_user')||'{}');
+  const userName = user.first ? ` for ${user.first}` : '';
+
+  content.innerHTML = `
+    <div class="plan-header">
+      <div>
+        <div class="plan-header-title">🥗 Your Wellness Meal Plan${userName}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">Generated ${new Date().toLocaleDateString()} · ${prefs.diet} · ${prefs.goal}</div>
+      </div>
+      <div class="plan-actions">
+        <button class="plan-action-btn pa-save" onclick="savePlan()">📥 Save Plan</button>
+        <button class="plan-action-btn pa-regen" onclick="generatePlan()">🔄 Regenerate</button>
+        <button class="plan-action-btn pa-regen" onclick="window.location.href='ai-assistant.html'">💬 Ask Arogya</button>
+      </div>
+    </div>
+    <div class="day-tabs" id="dayTabs">
+      ${days.map((d,i)=>`<button class="day-tab${i===0?' active':''}" onclick="showDay('${d.toLowerCase()}',this)">${d.substring(0,3)}</button>`).join('')}
+    </div>
+    <div class="plan-body" id="planBody"></div>
+    <div class="plan-tips" id="planTips"></div>`;
+
+  // Parse the text into sections
+  renderDayPlan(planText, 'monday');
+}
+
+function showDay(day, btn) {
+  document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  activeDay = day;
+  if (generatedPlan) renderDayPlan(generatedPlan.plan, day);
+}
+
+function renderDayPlan(text, day) {
+  const body = document.getElementById('planBody');
+  const tips = document.getElementById('planTips');
+  const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+
+  // Extract day section from text
+  const dayRegex = new RegExp(`###\\s*${dayName}([\\s\\S]*?)(?=###|---\\n\\n###|$)`, 'i');
+  const match = text.match(dayRegex);
+  const dayText = match ? match[1].trim() : text.substring(0, 1200);
+
+  const meals = [
+    { key:'Breakfast', emoji:'🌅', name:'Breakfast' },
+    { key:'Mid-Morning', emoji:'☀️', name:'Mid-Morning Snack' },
+    { key:'Lunch', emoji:'🍱', name:'Lunch' },
+    { key:'Evening', emoji:'🍵', name:'Evening Snack' },
+    { key:'Dinner', emoji:'🌙', name:'Dinner' },
+  ];
+
+  body.innerHTML = meals.map(m => {
+    const regex = new RegExp(`\\*\\*${m.emoji}\\s*${m.key}[^*]*\\*\\*([\\s\\S]*?)(?=\\*\\*[🌅☀️🍱🍵🌙]|$)`, 'i');
+    const mMatch = dayText.match(regex);
+    let mealContent = mMatch ? mMatch[1].trim() : `See your full plan below for ${m.name} ideas.`;
+    const lines = mealContent.split('\n').filter(l => l.trim()).map(l => {
+      const clean = l.replace(/^[-*•]\s*/, '').replace(/\*\*/g, '');
+      const isOpt = clean.toLowerCase().startsWith('option');
+      return `<div class="meal-item">
+        <div class="meal-item-name">${isOpt ? clean.split(':')[0] : '🌿 ' + (clean.split(':')[0]||clean)}</div>
+        <div class="meal-item-desc">${clean.includes(':') ? clean.split(':').slice(1).join(':').trim() : ''}</div>
+        <div class="meal-tags"><span class="meal-tag">Balanced</span><span class="meal-tag">Student-friendly</span></div>
+      </div>`;
+    });
+    return `<div class="meal-section${m.key==='Breakfast'?' open':''}">
+      <div class="meal-header" onclick="toggleMeal(this)">
+        <span class="meal-emoji">${m.emoji}</span>
+        <span class="meal-name">${m.name}</span>
+        <span class="meal-toggle">▾</span>
+      </div>
+      <div class="meal-content">${lines.join('') || `<p style="color:var(--muted);font-size:13px">See your generated plan for full ${m.name} suggestions.</p>`}</div>
+    </div>`;
+  }).join('');
+
+  // Hydration & tips
+  const hydrMatch = text.match(/###\s*💧[\s\S]*?(?=###|$)/i);
+  const tipsMatch = text.match(/###\s*✨[\s\S]*?(?=---|\*⚠️|$)/i);
+  const disclaimerMatch = text.match(/\*⚠️[\s\S]*$/i);
+
+  tips.innerHTML = `
+    <div class="tips-card">
+      <div class="tips-title">💧 Hydration Reminder</div>
+      ${(hydrMatch ? hydrMatch[0].replace(/###[^\n]*/,'').trim() : 'Drink 8–10 glasses of water daily. Start your morning with warm water.').split('\n').filter(l=>l.trim()&&!l.startsWith('#')).map(l=>`<div class="tip-row"><div class="tip-dot"></div>${l.replace(/^[-*]\s*/,'')}</div>`).join('')}
+    </div>
+    <div class="tips-card">
+      <div class="tips-title">✨ Wellness Tips</div>
+      ${(tipsMatch ? tipsMatch[0].replace(/###[^\n]*/,'').trim() : '').split('\n').filter(l=>l.trim()&&!l.startsWith('#')).slice(0,5).map(l=>`<div class="tip-row"><div class="tip-dot"></div>${l.replace(/^[-*\d.]\s*/,'').replace(/\*\*/g,'')}</div>`).join('') || '<div class="tip-row"><div class="tip-dot"></div>Eat regular balanced meals and stay hydrated.</div>'}
+    </div>
+    <div class="disclaimer-box">${disclaimerMatch ? disclaimerMatch[0].replace(/^\*/,'').replace(/\*$/,'') : '⚠️ This is general wellness information and is not a medical or dietary prescription. Consult a healthcare professional for specific needs.'}</div>`;
+}
+
+function toggleMeal(header) {
+  const section = header.parentElement;
+  section.classList.toggle('open');
+}
+
+/* ── SAVE PLAN ── */
+function savePlan() {
+  if (!generatedPlan) return;
+  const plans = JSON.parse(localStorage.getItem('wc_meal_plans')||'[]');
+  const d = generatedPlan.preferences;
+  generatedPlan.id = 'MP-' + Date.now();
+  generatedPlan.title = `${d.diet} plan · ${d.goal} · ${new Date().toLocaleDateString()}`;
+  plans.unshift(generatedPlan);
+  if (plans.length > 10) plans.pop();
+  localStorage.setItem('wc_meal_plans', JSON.stringify(plans));
+  document.getElementById('savedCount').textContent = plans.length;
+  alert('✅ Meal plan saved! View it in your Dashboard or Saved Plans.');
+}
+
+/* ── SHOW SAVED ── */
+function showSavedPlans() {
+  const plans = JSON.parse(localStorage.getItem('wc_meal_plans')||'[]');
+  const list = document.getElementById('savedPlansList');
+  document.getElementById('savedModal').style.display = 'flex';
+  if (!plans.length) { list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">No saved plans yet. Generate and save a plan!</p>'; return; }
+  list.innerHTML = plans.map((p,i) => `
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:24px">🥗</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700">${p.title||'Meal Plan'}</div>
+        <div style="font-size:12px;color:var(--muted)">${new Date(p.date).toLocaleDateString()}</div>
+      </div>
+      <button onclick="loadSavedPlan(${i})" style="padding:6px 14px;background:var(--primary-light);border:1px solid rgba(124,109,250,.3);border-radius:8px;font-size:12px;font-weight:600;color:var(--primary);cursor:pointer;font-family:var(--font)">Load</button>
+      <button onclick="deleteSavedPlan(${i})" style="padding:6px 10px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:8px;font-size:12px;color:var(--danger);cursor:pointer;font-family:var(--font)">×</button>
+    </div>`).join('');
+}
+
+function loadSavedPlan(i) {
+  const plans = JSON.parse(localStorage.getItem('wc_meal_plans')||'[]');
+  generatedPlan = plans[i];
+  renderPlan(generatedPlan.plan, generatedPlan.preferences);
+  document.getElementById('savedModal').style.display = 'none';
+}
+
+function deleteSavedPlan(i) {
+  const plans = JSON.parse(localStorage.getItem('wc_meal_plans')||'[]');
+  plans.splice(i,1);
+  localStorage.setItem('wc_meal_plans', JSON.stringify(plans));
+  document.getElementById('savedCount').textContent = plans.length;
+  showSavedPlans();
+}
+
+/* ── INIT ── */
+(function init() {
+  const plans = JSON.parse(localStorage.getItem('wc_meal_plans')||'[]');
+  document.getElementById('savedCount').textContent = plans.length;
+  if (plans.length > 0) {
+    const latest = plans[0];
+    generatedPlan = latest;
+    renderPlan(latest.plan, latest.preferences);
+  }
+  // Pre-fill from sessionStorage if set
+  const pre = sessionStorage.getItem('wc_mealplan_prefill');
+  if (pre) { sessionStorage.removeItem('wc_mealplan_prefill'); }
+  // Modal close
+  document.getElementById('savedModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('savedModal')) e.target.style.display = 'none';
+  });
+  // Scroll header
+  window.addEventListener('scroll', () => {
+    const _h = document.getElementById('header');
+    if (_h) _h.classList.toggle('scrolled', window.scrollY > 10);
+  });
+})();
+
+/* ── PARTICLES ── */
+(function(){const c=document.getElementById('particles');if(!c)return;const ctx=c.getContext('2d');let W,H,dots=[];function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}resize();window.addEventListener('resize',resize);for(let i=0;i<50;i++)dots.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:Math.random()*1.3+0.4,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,a:Math.random()*.4+.08});function draw(){ctx.clearRect(0,0,W,H);dots.forEach(d=>{d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(124,109,250,${d.a})`;ctx.fill();});for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.strokeStyle=`rgba(124,109,250,${.07*(1-dist/100)})`;ctx.lineWidth=.7;ctx.stroke();}}requestAnimationFrame(draw);}draw();})();
+</script>
+</body>
+</html>

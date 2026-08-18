@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WellnessConnect — Join / Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --primary:#7c6dfa;--primary-dark:#6254e0;--primary-light:rgba(124,109,250,0.15);
+      --primary-glow:rgba(124,109,250,0.4);--accent:#22d3ee;
+      --success:#34d399;--danger:#f87171;
+      --bg:#0d0f14;--bg2:#11141c;--surface:#161b27;--surface2:#1e2535;--surface3:#242d42;
+      --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+      --text:#e8eaf6;--text2:#c5cae9;--muted:#8892b0;--light:#576082;
+      --radius:14px;--radius-sm:9px;--radius-lg:22px;
+      --shadow:0 4px 24px rgba(0,0,0,0.45);--shadow-lg:0 12px 48px rgba(0,0,0,0.6);
+      --glow:0 0 40px rgba(124,109,250,0.18);
+      --font:'Inter',-apple-system,'Segoe UI',system-ui,sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    a{color:var(--primary);text-decoration:none}
+    a:hover{color:var(--accent)}
+
+    /* ── CANVAS PARTICLES ── */
+    #particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+    /* ── BACKGROUND ORBS ── */
+    .orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px)}
+    .orb1{width:600px;height:600px;background:radial-gradient(circle,rgba(124,109,250,0.18),transparent 70%);top:-200px;right:-100px;animation:orbFloat1 14s ease-in-out infinite alternate}
+    .orb2{width:500px;height:500px;background:radial-gradient(circle,rgba(34,211,238,0.1),transparent 70%);bottom:-200px;left:-100px;animation:orbFloat2 16s ease-in-out infinite alternate}
+    .orb3{width:300px;height:300px;background:radial-gradient(circle,rgba(52,211,153,0.08),transparent 70%);top:40%;left:30%;animation:orbFloat3 12s ease-in-out infinite alternate}
+    @keyframes orbFloat1{from{transform:translate(0,0) scale(1)}to{transform:translate(-40px,60px) scale(1.1)}}
+    @keyframes orbFloat2{from{transform:translate(0,0) scale(1)}to{transform:translate(50px,-40px) scale(1.08)}}
+    @keyframes orbFloat3{from{transform:translate(0,0)}to{transform:translate(30px,-50px)}}
+
+    /* ── HEADER ── */
+    .header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,15,20,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px var(--primary-glow)}
+    .logo-name{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-0.3px}
+    .back-btn{padding:7px 16px;border:1.5px solid var(--border2);border-radius:20px;font-size:13px;font-weight:600;color:var(--muted);background:transparent;cursor:pointer;font-family:var(--font);transition:all .2s;text-decoration:none}
+    .back-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+
+    /* ── MAIN LAYOUT ── */
+    .page{flex:1;display:flex;align-items:center;justify-content:center;padding:100px 20px 60px;position:relative;z-index:1}
+    .auth-wrapper{width:100%;max-width:480px}
+
+    /* ── TABS ── */
+    .tab-bar{display:flex;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:5px;gap:4px;margin-bottom:28px}
+    .tab-btn{flex:1;padding:10px;border:none;border-radius:10px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .22s;color:var(--muted);background:transparent}
+    .tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 18px var(--primary-glow)}
+
+    /* ── CARD ── */
+    .auth-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:40px 36px;box-shadow:var(--shadow-lg),var(--glow);animation:fadeSlide .4s ease both;position:relative;overflow:hidden}
+    .auth-card::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,var(--primary-glow),transparent 70%);pointer-events:none}
+    @keyframes fadeSlide{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+    .auth-title{font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;color:var(--text)}
+    .auth-sub{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.55}
+
+    /* ── FORM ── */
+    .form-group{margin-bottom:18px;position:relative}
+    .form-group label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+    .form-input{width:100%;padding:12px 16px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;color:var(--text);outline:none;transition:all .22s}
+    .form-input::placeholder{color:var(--light)}
+    .form-input:focus{border-color:var(--primary);background:var(--surface3);box-shadow:0 0 0 3px var(--primary-light),0 0 16px var(--primary-glow)}
+    .form-input.error{border-color:var(--danger);box-shadow:0 0 0 3px rgba(248,113,113,.15)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+    /* password toggle */
+    .pw-wrap{position:relative}
+    .pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;transition:color .2s;font-size:16px}
+    .pw-toggle:hover{color:var(--primary)}
+
+    /* strength bar */
+    .strength-bar{height:3px;border-radius:2px;margin-top:8px;background:var(--surface3);overflow:hidden}
+    .strength-fill{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
+
+    /* ── SOCIAL ── */
+    .divider{display:flex;align-items:center;gap:12px;margin:22px 0;color:var(--light);font-size:12px;font-weight:600}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border2)}
+    .social-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+    .social-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .22s}
+    .social-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);box-shadow:0 0 14px var(--primary-glow)}
+    .social-btn svg{flex-shrink:0}
+
+    /* ── SUBMIT ── */
+    .submit-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:all .22s;box-shadow:0 4px 22px var(--primary-glow);position:relative;overflow:hidden;margin-top:4px}
+    .submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px var(--primary-glow);filter:brightness(1.1)}
+    .submit-btn:active{transform:translateY(0)}
+    .submit-btn .btn-loader{display:none;width:18px;height:18px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+    .submit-btn.loading .btn-text{display:none}
+    .submit-btn.loading .btn-loader{display:block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── MESSAGES ── */
+    .msg-box{padding:12px 16px;border-radius:var(--radius-sm);font-size:13.5px;margin-bottom:18px;font-weight:500;display:none;animation:fadeSlide .3s ease}
+    .msg-box.success{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--success)}
+    .msg-box.error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--danger)}
+    .msg-box.show{display:block}
+
+    /* ── CHECKBOXES / LINKS ── */
+    .form-check{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--muted);margin-bottom:18px}
+    .form-check input{width:15px;height:15px;flex-shrink:0;margin-top:2px;accent-color:var(--primary);cursor:pointer}
+    .forgot{font-size:13px;color:var(--muted);text-align:right;display:block;margin-top:-10px;margin-bottom:18px;transition:color .2s}
+    .forgot:hover{color:var(--primary)}
+
+    /* ── AVATAR PICKER ── */
+    .avatar-row{display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+    .avatar-opt{width:44px;height:44px;border-radius:50%;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--surface2);border:2px solid var(--border2);transition:all .2s}
+    .avatar-opt:hover,.avatar-opt.selected{border-color:var(--primary);background:var(--primary-light);box-shadow:0 0 12px var(--primary-glow);transform:scale(1.1)}
+
+    /* ── STEPS indicator ── */
+    .steps{display:flex;gap:8px;justify-content:center;margin-bottom:24px}
+    .step-dot{width:8px;height:8px;border-radius:50%;background:var(--surface3);transition:all .3s}
+    .step-dot.active{background:var(--primary);box-shadow:0 0 8px var(--primary-glow);width:24px;border-radius:4px}
+    .step-dot.done{background:var(--success)}
+
+    /* ── SUCCESS SCREEN ── */
+    .success-screen{text-align:center;padding:10px 0;display:none}
+    .success-circle{width:72px;height:72px;border-radius:50%;background:rgba(52,211,153,.15);border:2px solid rgba(52,211,153,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1) both}
+    @keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+    .success-screen h2{font-size:24px;font-weight:800;margin-bottom:8px}
+    .success-screen p{font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+
+    /* ── FOOTER ── */
+    .page-footer{text-align:center;font-size:12px;color:var(--light);padding:16px;position:relative;z-index:1}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:520px){
+      .auth-card{padding:28px 20px}
+      .form-row{grid-template-columns:1fr}
+      .social-row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<canvas id="particles"></canvas>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <a href="index.html" class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 40 40" fill="none" width="22" height="22">
+        <path d="M20 8C14 8 8 13 8 18.5C8 25 14 28 20 33C26 28 32 25 32 18.5C32 13 26 8 20 8Z" fill="white" opacity="0.9"/>
+        <rect x="18.5" y="12" width="3" height="9" rx="1.5" fill="#7c6dfa"/>
+        <rect x="14" y="15.5" width="12" height="3" rx="1.5" fill="#7c6dfa"/>
+      </svg>
+    </div>
+    <span class="logo-name">WellnessConnect</span>
+  </a>
+  <a href="index.html" class="back-btn">← Back to Home</a>
+</header>
+
+<!-- MAIN -->
+<main class="page">
+  <div class="auth-wrapper">
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabRegister" onclick="switchTab('register')">Create Account</button>
+      <button class="tab-btn" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+    </div>
+
+    <!-- ══ REGISTER CARD ══ -->
+    <div class="auth-card" id="cardRegister">
+      <div class="auth-title">Join WellnessConnect 🌿</div>
+      <div class="auth-sub">Your safe space for campus health & wellbeing. Free, confidential, always here.</div>
+
+      <!-- steps -->
+      <div class="steps">
+        <div class="step-dot active" id="dot1"></div>
+        <div class="step-dot" id="dot2"></div>
+        <div class="step-dot" id="dot3"></div>
+      </div>
+
+      <!-- msg box -->
+      <div class="msg-box" id="regMsg"></div>
+
+      <!-- avatar picker -->
+      <div class="avatar-row" id="avatarRow">
+        <div class="avatar-opt selected" data-av="🧑‍🎓" onclick="pickAvatar(this)">🧑‍🎓</div>
+        <div class="avatar-opt" data-av="👩‍🎓" onclick="pickAvatar(this)">👩‍🎓</div>
+        <div class="avatar-opt" data-av="🧑‍💻" onclick="pickAvatar(this)">🧑‍💻</div>
+        <div class="avatar-opt" data-av="👨‍⚕️" onclick="pickAvatar(this)">👨‍⚕️</div>
+        <div class="avatar-opt" data-av="👩‍⚕️" onclick="pickAvatar(this)">👩‍⚕️</div>
+        <div class="avatar-opt" data-av="🦁" onclick="pickAvatar(this)">🦁</div>
+      </div>
+
+      <form id="registerForm" onsubmit="handleRegister(event)" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" id="rFirst" class="form-input" placeholder="Priya" required autocomplete="given-name"/>
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" id="rLast" class="form-input" placeholder="Sharma" required autocomplete="family-name"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>College Email</label>
+          <input type="email" id="rEmail" class="form-input" placeholder="priya@college.edu" required autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label>Roll Number / Student ID</label>
+          <input type="text" id="rRoll" class="form-input" placeholder="CS2024001" required/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="rPass" class="form-input" placeholder="Min. 8 characters" required oninput="checkStrength(this.value)"/>
+            <button type="button" class="pw-toggle" onclick="togglePw('rPass',this)">👁️</button>
+          </div>
+          <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:4px" id="strengthLabel"></div>
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="rPass2" class="form-input" placeholder="Re-enter password" required/>
+            <button type="button" class="pw-toggle" onclick="togglePw('rPass2',this)">👁️</button>
+          </div>
+        </div>
+        <div class="form-check">
+          <input type="checkbox" id="rConsent" required/>
+          <label for="rConsent">I agree to the <a href="#">Privacy Policy</a> and <a href="#">Terms of Use</a>. My data will be kept strictly confidential.</label>
+        </div>
+        <button type="submit" class="submit-btn" id="regBtn">
+          <span class="btn-text">Create My Account ✨</span>
+          <div class="btn-loader"></div>
+        </button>
+      </form>
+
+      <!-- success screen -->
+      <div class="success-screen" id="regSuccess">
+        <div class="success-circle">✅</div>
+        <h2>Welcome aboard! 🎉</h2>
+        <p>Your WellnessConnect account has been created.<br/>You're now part of a community that cares about your wellbeing.</p>
+        <a href="index.html" class="submit-btn" style="display:block;text-decoration:none;padding:13px;text-align:center;border-radius:var(--radius-sm);font-weight:700;font-size:15px">
+          Go to Dashboard 🚀
+        </a>
+      </div>
+
+      <div class="divider">OR SIGN UP WITH</div>
+      <div class="social-row">
+        <button class="social-btn" onclick="socialLogin('Google')">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.2 30.2 0 24 0 14.7 0 6.8 5.4 2.9 13.3l7.8 6C12.5 13.1 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.8-2.1 5.2-4.5 6.8l7 5.4c4-3.8 6.3-9.3 6.3-16.2z"/><path fill="#FBBC05" d="M10.7 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7L2.5 13.3A23.9 23.9 0 0 0 0 24c0 3.8.9 7.4 2.5 10.5l8.2-5.8z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7-5.4c-2 1.4-4.6 2.2-8.2 2.2-6.2 0-11.5-3.6-13.3-9.3l-7.8 6C6.8 42.6 14.7 48 24 48z"/></svg>
+          Google
+        </button>
+        <button class="social-btn" onclick="socialLogin('Microsoft')">
+          <svg width="18" height="18" viewBox="0 0 21 21"><rect width="10" height="10" fill="#F25022"/><rect x="11" width="10" height="10" fill="#7FBA00"/><rect y="11" width="10" height="10" fill="#00A4EF"/><rect x="11" y="11" width="10" height="10" fill="#FFB900"/></svg>
+          Microsoft
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ LOGIN CARD ══ -->
+    <div class="auth-card" id="cardLogin" style="display:none">
+      <div class="auth-title">Welcome back 👋</div>
+      <div class="auth-sub">Sign in to access your wellness dashboard and continue your journey.</div>
+
+      <div class="msg-box" id="loginMsg"></div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+        <div class="form-group">
+          <label>Email / Student ID</label>
+          <input type="text" id="lEmail" class="form-input" placeholder="priya@college.edu" required autocomplete="username"/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="lPass" class="form-input" placeholder="Your password" required autocomplete="current-password"/>
+            <button type="button" class="pw-toggle" onclick="togglePw('lPass',this)">👁️</button>
+          </div>
+        </div>
+        <a href="#" class="forgot" onclick="forgotPassword(event)">Forgot password?</a>
+        <button type="submit" class="submit-btn" id="loginBtn">
+          <span class="btn-text">Sign In →</span>
+          <div class="btn-loader"></div>
+        </button>
+      </form>
+
+      <div class="divider">OR CONTINUE WITH</div>
+      <div class="social-row">
+        <button class="social-btn" onclick="socialLogin('Google')">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.2 30.2 0 24 0 14.7 0 6.8 5.4 2.9 13.3l7.8 6C12.5 13.1 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.8-2.1 5.2-4.5 6.8l7 5.4c4-3.8 6.3-9.3 6.3-16.2z"/><path fill="#FBBC05" d="M10.7 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7L2.5 13.3A23.9 23.9 0 0 0 0 24c0 3.8.9 7.4 2.5 10.5l8.2-5.8z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7-5.4c-2 1.4-4.6 2.2-8.2 2.2-6.2 0-11.5-3.6-13.3-9.3l-7.8 6C6.8 42.6 14.7 48 24 48z"/></svg>
+          Google
+        </button>
+        <button class="social-btn" onclick="socialLogin('Microsoft')">
+          <svg width="18" height="18" viewBox="0 0 21 21"><rect width="10" height="10" fill="#F25022"/><rect x="11" width="10" height="10" fill="#7FBA00"/><rect y="11" width="10" height="10" fill="#00A4EF"/><rect x="11" y="11" width="10" height="10" fill="#FFB900"/></svg>
+          Microsoft
+        </button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="page-footer">© 2025 WellnessConnect · Confidential & Secure · No medical data is stored</footer>
+
+<script>
+/* ── TAB SWITCHER ── */
+function switchTab(tab) {
+  const isReg = tab === 'register';
+  document.getElementById('cardRegister').style.display = isReg ? 'block' : 'none';
+  document.getElementById('cardLogin').style.display    = isReg ? 'none'  : 'block';
+  document.getElementById('tabRegister').classList.toggle('active', isReg);
+  document.getElementById('tabLogin').classList.toggle('active', !isReg);
+}
+
+/* ── AVATAR PICKER ── */
+let selectedAvatar = '🧑‍🎓';
+function pickAvatar(el) {
+  document.querySelectorAll('.avatar-opt').forEach(a => a.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedAvatar = el.dataset.av;
+}
+
+/* ── PASSWORD TOGGLE ── */
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁️';
+}
+
+/* ── PASSWORD STRENGTH ── */
+function checkStrength(val) {
+  const fill = document.getElementById('strengthFill');
+  const label = document.getElementById('strengthLabel');
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { pct:'0%', bg:'transparent', txt:'' },
+    { pct:'25%', bg:'#f87171', txt:'Weak 😟' },
+    { pct:'50%', bg:'#fbbf24', txt:'Fair 😐' },
+    { pct:'75%', bg:'#34d399', txt:'Good 😊' },
+    { pct:'100%', bg:'#7c6dfa', txt:'Strong 💪' },
+  ];
+  fill.style.width  = levels[score].pct;
+  fill.style.background = levels[score].bg;
+  label.textContent = levels[score].txt;
+  label.style.color = levels[score].bg;
+}
+
+/* ── SHOW MESSAGE ── */
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `msg-box ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+/* ── REGISTER ── */
+function handleRegister(e) {
+  e.preventDefault();
+  const first = document.getElementById('rFirst').value.trim();
+  const last  = document.getElementById('rLast').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const roll  = document.getElementById('rRoll').value.trim();
+  const pass  = document.getElementById('rPass').value;
+  const pass2 = document.getElementById('rPass2').value;
+  const consent = document.getElementById('rConsent').checked;
+
+  if (!first || !last || !email || !roll || !pass) {
+    showMsg('regMsg','⚠️ Please fill in all required fields.','error'); return;
+  }
+  if (pass !== pass2) {
+    showMsg('regMsg','⚠️ Passwords do not match.','error'); return;
+  }
+  if (pass.length < 8) {
+    showMsg('regMsg','⚠️ Password must be at least 8 characters.','error'); return;
+  }
+  if (!consent) {
+    showMsg('regMsg','⚠️ Please accept the Privacy Policy to continue.','error'); return;
+  }
+
+  const btn = document.getElementById('regBtn');
+  btn.classList.add('loading');
+
+  setTimeout(() => {
+    // Store in localStorage (demo)
+    const user = { first, last, email, roll, avatar: selectedAvatar, joined: new Date().toISOString() };
+    localStorage.setItem('wc_user', JSON.stringify(user));
+
+    btn.classList.remove('loading');
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('avatarRow').style.display = 'none';
+    document.querySelector('.steps').style.display = 'none';
+    document.querySelector('#cardRegister .auth-title').style.display = 'none';
+    document.querySelector('#cardRegister .auth-sub').style.display = 'none';
+    document.querySelectorAll('#cardRegister .divider, #cardRegister .social-row').forEach(el => el.style.display = 'none');
+    document.getElementById('regSuccess').style.display = 'block';
+  }, 1800);
+}
+
+/* ── LOGIN ── */
+function handleLogin(e) {
+  e.preventDefault();
+  const emailVal = document.getElementById('lEmail').value.trim();
+  const passVal  = document.getElementById('lPass').value;
+
+  if (!emailVal || !passVal) {
+    showMsg('loginMsg','⚠️ Please enter your email and password.','error'); return;
+  }
+
+  const btn = document.getElementById('loginBtn');
+  btn.classList.add('loading');
+
+  setTimeout(() => {
+    btn.classList.remove('loading');
+    const stored = JSON.parse(localStorage.getItem('wc_user') || '{}');
+    // Demo: any stored email or default demo credentials work
+    if (stored.email === emailVal || (emailVal === 'demo@college.edu' && passVal === 'demo1234')) {
+      showMsg('loginMsg','✅ Signed in! Redirecting...','success');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+    } else {
+      showMsg('loginMsg','❌ Invalid credentials. Try demo@college.edu / demo1234','error');
+    }
+  }, 1600);
+}
+
+/* ── FORGOT PASSWORD ── */
+function forgotPassword(e) {
+  e.preventDefault();
+  const email = document.getElementById('lEmail').value.trim();
+  if (!email) {
+    showMsg('loginMsg','📧 Enter your email above first, then click Forgot Password.','error');
+    document.getElementById('lEmail').focus();
+    return;
+  }
+  showMsg('loginMsg',`✅ A reset link has been sent to ${email} (demo mode).`,'success');
+}
+
+/* ── SOCIAL LOGIN ── */
+function socialLogin(provider) {
+  showMsg(
+    document.getElementById('cardLogin').style.display !== 'none' ? 'loginMsg' : 'regMsg',
+    `🔗 ${provider} login is available in the full version. Use email sign-up for now.`,
+    'success'
+  );
+}
+
+/* ── PARTICLE CANVAS ── */
+(function initParticles() {
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let W, H, dots = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < 60; i++) {
+    dots.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      r: Math.random() * 1.5 + 0.5,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      a: Math.random() * 0.5 + 0.1,
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    dots.forEach(d => {
+      d.x += d.vx; d.y += d.vy;
+      if (d.x < 0) d.x = W; if (d.x > W) d.x = 0;
+      if (d.y < 0) d.y = H; if (d.y > H) d.y = 0;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(124,109,250,${d.a})`;
+      ctx.fill();
+    });
+    // draw lines between nearby dots
+    for (let i = 0; i < dots.length; i++) {
+      for (let j = i + 1; j < dots.length; j++) {
+        const dx = dots[i].x - dots[j].x;
+        const dy = dots[i].y - dots[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 100) {
+          ctx.beginPath();
+          ctx.moveTo(dots[i].x, dots[i].y);
+          ctx.lineTo(dots[j].x, dots[j].y);
+          ctx.strokeStyle = `rgba(124,109,250,${0.06 * (1 - dist/100)})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WellnessConnect — My Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    /* ── PAGE-SPECIFIC OVERRIDES ── */
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 24px 60px; position: relative; z-index: 1; }
+
+    /* ── PROFILE CARD ── */
+    .profile-hero {
+      background: linear-gradient(135deg, #1a1040 0%, #111830 100%);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-lg);
+      padding: 36px 40px;
+      display: flex; align-items: center; gap: 28px;
+      margin-bottom: 32px;
+      position: relative; overflow: hidden;
+      box-shadow: var(--shadow-lg), var(--glow);
+    }
+    .profile-hero::before {
+      content: ''; position: absolute; top: -60px; right: -60px;
+      width: 250px; height: 250px;
+      background: radial-gradient(circle, var(--primary-glow), transparent 70%);
+      pointer-events: none;
+    }
+    .profile-avatar {
+      width: 76px; height: 76px; border-radius: 50%;
+      background: var(--primary-light);
+      border: 3px solid rgba(124,109,250,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; flex-shrink: 0;
+      box-shadow: 0 0 24px var(--primary-glow);
+    }
+    .profile-info h2 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+    .profile-info p  { font-size: 14px; color: var(--muted); }
+    .profile-stats   { display: flex; gap: 28px; margin-left: auto; flex-wrap: wrap; }
+    .pstat { text-align: center; }
+    .pstat-num   { font-size: 28px; font-weight: 800; color: var(--primary); line-height: 1; }
+    .pstat-label { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+    /* ── TABS ── */
+    .dash-tabs { display: flex; gap: 6px; margin-bottom: 28px; flex-wrap: wrap; }
+    .dash-tab {
+      padding: 9px 22px; border: 1.5px solid var(--border2);
+      border-radius: 20px; font-size: 13.5px; font-weight: 600;
+      cursor: pointer; background: var(--surface); color: var(--muted);
+      transition: all .22s; font-family: var(--font);
+    }
+    .dash-tab.active, .dash-tab:hover {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff; border-color: var(--primary);
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    /* ── SECTION PANELS ── */
+    .dash-panel { display: none; animation: fadeIn .3s ease; }
+    .dash-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── APPOINTMENTS TABLE ── */
+    .appt-toolbar {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .appt-toolbar h3 { font-size: 18px; font-weight: 800; flex: 1; }
+    .appt-search {
+      padding: 9px 14px; background: var(--surface2); border: 1.5px solid var(--border2);
+      border-radius: var(--radius-sm); font-family: var(--font); font-size: 13px;
+      color: var(--text); outline: none; width: 220px; transition: all .22s;
+    }
+    .appt-search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+    .appt-search::placeholder { color: var(--light); }
+    .filter-select {
+      padding: 9px 14px; background: var(--surface2); border: 1.5px solid var(--border2);
+      border-radius: var(--radius-sm); font-family: var(--font); font-size: 13px;
+      color: var(--text); outline: none; cursor: pointer;
+    }
+    .clear-all-btn {
+      padding: 9px 16px; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+      border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+      color: var(--danger); cursor: pointer; font-family: var(--font); transition: all .22s;
+    }
+    .clear-all-btn:hover { background: var(--danger); color: #fff; }
+
+    .appt-grid { display: flex; flex-direction: column; gap: 14px; }
+    .appt-card {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 22px 26px;
+      display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center;
+      transition: all .22s; position: relative; overflow: hidden;
+    }
+    .appt-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: linear-gradient(180deg, var(--primary), var(--accent));
+      border-radius: 4px 0 0 4px;
+    }
+    .appt-card:hover { border-color: rgba(124,109,250,.4); box-shadow: 0 0 24px var(--primary-glow); transform: translateY(-2px); }
+    .appt-card.cancelled::before { background: var(--danger); }
+    .appt-card.completed::before { background: var(--success); }
+
+    .appt-date-box {
+      width: 60px; text-align: center;
+      background: var(--primary-light); border: 1px solid rgba(124,109,250,.3);
+      border-radius: 10px; padding: 8px 6px;
+    }
+    .appt-date-box .aday   { font-size: 22px; font-weight: 800; color: var(--primary); line-height: 1; }
+    .appt-date-box .amonth { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: .5px; margin-top: 2px; }
+
+    .appt-main .atype    { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .appt-main .aconcern { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .appt-main .ameta    { display: flex; gap: 14px; flex-wrap: wrap; }
+    .appt-meta-item      { font-size: 12.5px; color: var(--light); display: flex; align-items: center; gap: 4px; }
+
+    .appt-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+    .appt-status {
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    }
+    .status-upcoming  { background: rgba(124,109,250,.15); color: var(--primary); border: 1px solid rgba(124,109,250,.3); }
+    .status-completed { background: rgba(52,211,153,.12); color: var(--success); border: 1px solid rgba(52,211,153,.3); }
+    .status-cancelled { background: rgba(248,113,113,.12); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+
+    .appt-ref    { font-size: 11.5px; color: var(--light); font-family: monospace; }
+    .appt-actions { display: flex; gap: 8px; }
+    .appt-btn {
+      padding: 6px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; font-family: var(--font); border: none; transition: all .22s;
+    }
+    .appt-btn-cancel { background: rgba(248,113,113,.1); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+    .appt-btn-cancel:hover { background: var(--danger); color: #fff; }
+    .appt-btn-view   { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+    .appt-btn-view:hover { background: var(--primary-light); color: var(--primary); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 64px 20px;
+      background: var(--surface); border: 1px dashed var(--border2);
+      border-radius: var(--radius-lg);
+    }
+    .empty-icon  { font-size: 52px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .empty-state p  { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+    /* ── WELLNESS STATS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 22px 20px; text-align: center;
+      transition: all .22s; position: relative; overflow: hidden;
+    }
+    .stat-card::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 0 24px var(--primary-glow); }
+    .stat-card-icon  { font-size: 28px; margin-bottom: 10px; }
+    .stat-card-num   { font-size: 32px; font-weight: 800; color: var(--primary); line-height: 1; margin-bottom: 4px; }
+    .stat-card-label { font-size: 13px; color: var(--muted); }
+
+    /* ── DETAIL MODAL ── */
+    .detail-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+    .detail-label { width: 130px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); flex-shrink: 0; padding-top: 2px; }
+    .detail-val   { font-size: 14px; color: var(--text2); }
+
+    @media(max-width:768px){
+      .profile-hero { flex-direction: column; text-align: center; }
+      .profile-stats { margin-left: 0; justify-content: center; }
+      .appt-card { grid-template-columns: 1fr; }
+      .appt-date-box { display: none; }
+      .appt-right { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
+    }
+    @media(max-width:480px){
+      .page-wrap { padding: 90px 16px 40px; }
+      .profile-hero { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+<canvas id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
+
+<!-- HEADER -->
+<header class="header" id="header">
+  <div class="container nav-container">
+    <a href="index.html" class="logo" style="text-decoration:none">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" width="40" height="40">
+          <circle cx="20" cy="20" r="20" fill="#4f7dff"/>
+          <path d="M20 10 C14 10 10 14.5 10 19.5 C10 25 14 28 20 33 C26 28 30 25 30 19.5 C30 14.5 26 10 20 10Z" fill="white" opacity="0.9"/>
+          <rect x="18.5" y="15" width="3" height="9" rx="1.5" fill="#4f7dff"/>
+          <rect x="15" y="18.5" width="10" height="3" rx="1.5" fill="#4f7dff"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-main">WellnessConnect</span>
+        <span class="logo-sub">Student Health Assistant</span>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html" class="nav-link">Chat</a>
+      <a href="resources.html" class="nav-link">Resources</a>
+      <a href="index.html" class="nav-link">Book</a>
+      <a href="helplines.html" class="nav-link">Helplines</a>
+      <a href="ai-assistant.html" class="nav-link">🤖 AI Chat</a>
+      <a href="meal-plan.html" class="nav-link">🥗 Meal Plan</a>
+      <a href="wellness-dashboard.html" class="nav-link">📊 Dashboard</a>
+      <a href="dashboard.html" class="nav-link active">📅 Appointments</a>
+    </nav>
+    <div class="nav-right">
+      <a href="register.html" class="register-nav-btn">✨ Account</a>
+      <button class="emergency-btn" onclick="window.location.href='helplines.html'">🆘 Emergency</button>
+    </div>
+  </div>
+</header>
+
+<div class="page-wrap">
+
+  <!-- PROFILE HERO -->
+  <div class="profile-hero" id="profileHero">
+    <div class="profile-avatar" id="profileAvatar">🧑‍🎓</div>
+    <div class="profile-info">
+      <h2 id="profileName">Welcome back!</h2>
+      <p id="profileEmail">Your personal wellness dashboard</p>
+      <p style="font-size:12px;color:var(--primary);margin-top:4px" id="profileJoined"></p>
+    </div>
+    <div class="profile-stats">
+      <div class="pstat"><div class="pstat-num" id="statTotal">0</div><div class="pstat-label">Total Bookings</div></div>
+      <div class="pstat"><div class="pstat-num" id="statUpcoming">0</div><div class="pstat-label">Upcoming</div></div>
+      <div class="pstat"><div class="pstat-num" id="statCompleted">0</div><div class="pstat-label">Completed</div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="dash-tabs">
+    <button class="dash-tab active" onclick="switchPanel('appointments',this)">📅 My Appointments</button>
+    <button class="dash-tab" onclick="switchPanel('wellness',this)">📊 Wellness Stats</button>
+    <button class="dash-tab" onclick="switchPanel('profile',this)">👤 Profile</button>
+  </div>
+
+  <!-- ── PANEL: APPOINTMENTS ── -->
+  <div class="dash-panel active" id="panel-appointments">
+    <div class="appt-toolbar">
+      <h3>Appointment History</h3>
+      <input class="appt-search" type="text" id="apptSearch" placeholder="🔍 Search appointments…" oninput="renderAppointments()"/>
+      <select class="filter-select" id="apptFilter" onchange="renderAppointments()">
+        <option value="all">All Status</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <button class="clear-all-btn" onclick="clearAllAppointments()">🗑️ Clear All</button>
+    </div>
+    <div class="appt-grid" id="apptGrid"></div>
+  </div>
+
+  <!-- ── PANEL: WELLNESS STATS ── -->
+  <div class="dash-panel" id="panel-wellness">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;">Most Visited Concerns</h3>
+      <div id="concernChart"></div>
+    </div>
+  </div>
+
+  <!-- ── PANEL: PROFILE ── -->
+  <div class="dash-panel" id="panel-profile">
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:32px;max-width:520px;">
+      <h3 style="font-size:18px;font-weight:800;margin-bottom:24px;">Your Profile</h3>
+      <div id="profileDetails"></div>
+      <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap">
+        <a href="register.html" class="btn btn-primary" style="font-size:13px;padding:9px 20px">✏️ Edit Account</a>
+        <button class="btn btn-secondary" style="font-size:13px;padding:9px 20px" onclick="logOut()">🚪 Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal" style="display:none">
+  <div class="modal modal-large" style="max-width:500px;text-align:left">
+    <button class="modal-close" onclick="document.getElementById('detailModal').style.display='none'">✕</button>
+    <div class="modal-icon" style="font-size:36px;margin-bottom:12px">📋</div>
+    <h3 style="margin-bottom:20px">Appointment Details</h3>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer" style="position:relative;z-index:1">
+  <div class="footer-bottom">
+    <p>© 2025 WellnessConnect · <a href="index.html">Home</a> · <a href="register.html">Account</a> · Confidential & Secure</p>
+  </div>
+</footer>
+
+<script>
+/* ── HELPERS ── */
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const TYPE_LABELS = { counsellor:'Mental Health Counsellor', clinic:'Campus Health Clinic', nutrition:'Nutritionist', physio:'Physiotherapist', online:'Tele-consultation' };
+const CONCERN_LABELS = { anxiety:'Anxiety / Stress', depression:'Low Mood / Depression', sleep:'Sleep Issues', relationships:'Relationship Issues', academic:'Academic Pressure', physical:'Physical Health', other:'Other' };
+const STATUS_ICONS = { upcoming:'🗓️', completed:'✅', cancelled:'❌' };
+
+function getAppointments() {
+  try { return JSON.parse(localStorage.getItem('wc_appointments') || '[]'); } catch(e) { return []; }
+}
+function saveAppointments(arr) {
+  localStorage.setItem('wc_appointments', JSON.stringify(arr));
+}
+function getUser() {
+  try { return JSON.parse(localStorage.getItem('wc_user') || '{}'); } catch(e) { return {}; }
+}
+
+/* ── INIT ── */
+(function init() {
+  // Populate profile
+  const user = getUser();
+  if (user.first) {
+    document.getElementById('profileAvatar').textContent = user.avatar || '🧑‍🎓';
+    document.getElementById('profileName').textContent = `${user.first} ${user.last || ''}`;
+    document.getElementById('profileEmail').textContent = user.email || 'Student';
+    if (user.joined) {
+      const d = new Date(user.joined);
+      document.getElementById('profileJoined').textContent = `Member since ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+    }
+  }
+
+  // Auto-age appointments (mark past ones as completed if upcoming)
+  const today = new Date().toISOString().split('T')[0];
+  const appts = getAppointments().map(a => {
+    if (a.status === 'upcoming' && a.date < today) a.status = 'completed';
+    return a;
+  });
+  saveAppointments(appts);
+
+  // Stats
+  const total = appts.length;
+  const upcoming  = appts.filter(a => a.status === 'upcoming').length;
+  const completed = appts.filter(a => a.status === 'completed').length;
+  document.getElementById('statTotal').textContent    = total;
+  document.getElementById('statUpcoming').textContent  = upcoming;
+  document.getElementById('statCompleted').textContent = completed;
+
+  renderAppointments();
+  renderWellnessStats(appts);
+  renderProfileDetails(user);
+})();
+
+/* ── TABS ── */
+function switchPanel(id, btn) {
+  document.querySelectorAll('.dash-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.dash-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ── RENDER APPOINTMENTS ── */
+function renderAppointments() {
+  const grid = document.getElementById('apptGrid');
+  const search = (document.getElementById('apptSearch').value || '').toLowerCase();
+  const filter = document.getElementById('apptFilter').value;
+  let appts = getAppointments();
+
+  // Apply filter
+  if (filter !== 'all') appts = appts.filter(a => a.status === filter);
+  // Apply search
+  if (search) appts = appts.filter(a =>
+    (a.name||'').toLowerCase().includes(search) ||
+    (TYPE_LABELS[a.type]||a.type||'').toLowerCase().includes(search) ||
+    (CONCERN_LABELS[a.concern]||a.concern||'').toLowerCase().includes(search) ||
+    (a.ref||'').toLowerCase().includes(search)
+  );
+
+  // Sort newest first
+  appts.sort((a,b) => (b.bookedAt||'') > (a.bookedAt||'') ? 1 : -1);
+
+  if (!appts.length) {
+    grid.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <h3>${filter==='all'?'No appointments yet':'No '+filter+' appointments'}</h3>
+      <p>${filter==='all'?'Book your first session and it will appear here.':'Try a different filter.'}</p>
+      <a href="index.html" class="btn btn-primary" style="font-size:13px;padding:9px 20px">📅 Book Appointment</a>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  appts.forEach(a => {
+    const d = new Date(a.date + 'T00:00:00');
+    const statusClass = a.status === 'upcoming' ? 'status-upcoming' : a.status === 'completed' ? 'status-completed' : 'status-cancelled';
+    const card = document.createElement('div');
+    card.className = `appt-card ${a.status}`;
+    card.innerHTML = `
+      <div class="appt-date-box">
+        <div class="aday">${d.getDate()}</div>
+        <div class="amonth">${MONTHS[d.getMonth()]}</div>
+      </div>
+      <div class="appt-main">
+        <div class="atype">${STATUS_ICONS[a.status] || '📋'} ${TYPE_LABELS[a.type] || a.type}</div>
+        <div class="aconcern">${CONCERN_LABELS[a.concern] || a.concern}</div>
+        <div class="ameta">
+          <span class="appt-meta-item">🕐 ${a.time}</span>
+          <span class="appt-meta-item">👤 ${a.name}</span>
+          ${a.notes ? `<span class="appt-meta-item">📝 Has notes</span>` : ''}
+        </div>
+      </div>
+      <div class="appt-right">
+        <span class="appt-status ${statusClass}">${a.status.charAt(0).toUpperCase()+a.status.slice(1)}</span>
+        <span class="appt-ref">${a.ref}</span>
+        <div class="appt-actions">
+          <button class="appt-btn appt-btn-view" onclick="viewAppointment('${a.ref}')">View</button>
+          ${a.status==='upcoming' ? `<button class="appt-btn appt-btn-cancel" onclick="cancelAppointment('${a.ref}')">Cancel</button>` : ''}
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ── VIEW DETAIL ── */
+function viewAppointment(ref) {
+  const a = getAppointments().find(x => x.ref === ref);
+  if (!a) return;
+  const d = new Date(a.date + 'T00:00:00');
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-row"><div class="detail-label">Reference</div><div class="detail-val" style="font-family:monospace;color:var(--primary)">${a.ref}</div></div>
+    <div class="detail-row"><div class="detail-label">Status</div><div class="detail-val">${STATUS_ICONS[a.status]} ${a.status.charAt(0).toUpperCase()+a.status.slice(1)}</div></div>
+    <div class="detail-row"><div class="detail-label">Type</div><div class="detail-val">${TYPE_LABELS[a.type]||a.type}</div></div>
+    <div class="detail-row"><div class="detail-label">Concern</div><div class="detail-val">${CONCERN_LABELS[a.concern]||a.concern}</div></div>
+    <div class="detail-row"><div class="detail-label">Date & Time</div><div class="detail-val">${d.toDateString()} at ${a.time}</div></div>
+    <div class="detail-row"><div class="detail-label">Name</div><div class="detail-val">${a.name}</div></div>
+    <div class="detail-row"><div class="detail-label">Email</div><div class="detail-val">${a.email||'—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Phone</div><div class="detail-val">${a.phone||'—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Notes</div><div class="detail-val">${a.notes||'—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Booked on</div><div class="detail-val">${a.bookedAt ? new Date(a.bookedAt).toLocaleString() : '—'}</div></div>`;
+  document.getElementById('detailModal').style.display = 'flex';
+}
+
+/* ── CANCEL ── */
+function cancelAppointment(ref) {
+  if (!confirm('Cancel this appointment?')) return;
+  const appts = getAppointments().map(a => { if (a.ref===ref) a.status='cancelled'; return a; });
+  saveAppointments(appts);
+  location.reload();
+}
+
+/* ── CLEAR ALL ── */
+function clearAllAppointments() {
+  if (!confirm('Delete ALL appointment history? This cannot be undone.')) return;
+  localStorage.removeItem('wc_appointments');
+  location.reload();
+}
+
+/* ── WELLNESS STATS ── */
+function renderWellnessStats(appts) {
+  const grid = document.getElementById('statsGrid');
+  const total = appts.length;
+  const upcoming  = appts.filter(a=>a.status==='upcoming').length;
+  const completed = appts.filter(a=>a.status==='completed').length;
+  const cancelled = appts.filter(a=>a.status==='cancelled').length;
+  const types = {};
+  appts.forEach(a => { types[a.type] = (types[a.type]||0)+1; });
+  const topType = Object.entries(types).sort((a,b)=>b[1]-a[1])[0];
+
+  grid.innerHTML = `
+    <div class="stat-card"><div class="stat-card-icon">📅</div><div class="stat-card-num">${total}</div><div class="stat-card-label">Total Bookings</div></div>
+    <div class="stat-card"><div class="stat-card-icon">⏳</div><div class="stat-card-num">${upcoming}</div><div class="stat-card-label">Upcoming</div></div>
+    <div class="stat-card"><div class="stat-card-icon">✅</div><div class="stat-card-num">${completed}</div><div class="stat-card-label">Completed</div></div>
+    <div class="stat-card"><div class="stat-card-icon">❌</div><div class="stat-card-num">${cancelled}</div><div class="stat-card-label">Cancelled</div></div>
+    <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-card-num" style="font-size:18px">${topType?TYPE_LABELS[topType[0]]||topType[0]:'—'}</div><div class="stat-card-label">Most Booked</div></div>
+  `;
+
+  // Concern bar chart
+  const concerns = {};
+  appts.forEach(a => { concerns[a.concern] = (concerns[a.concern]||0)+1; });
+  const chartEl = document.getElementById('concernChart');
+  if (!Object.keys(concerns).length) { chartEl.innerHTML = '<p style="color:var(--muted);font-size:13px">No data yet — book some appointments first.</p>'; return; }
+  const max = Math.max(...Object.values(concerns));
+  chartEl.innerHTML = Object.entries(concerns).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="width:140px;font-size:12.5px;color:var(--muted);text-align:right;flex-shrink:0">${CONCERN_LABELS[k]||k}</div>
+      <div style="flex:1;background:var(--surface2);border-radius:6px;height:18px;overflow:hidden">
+        <div style="height:100%;width:${Math.round(v/max*100)}%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:6px;transition:width .6s ease"></div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--primary);width:20px">${v}</div>
+    </div>`).join('');
+}
+
+/* ── PROFILE ── */
+function renderProfileDetails(user) {
+  const el = document.getElementById('profileDetails');
+  if (!user.first) { el.innerHTML = '<p style="color:var(--muted);font-size:14px">No account found. <a href="register.html">Create one here →</a></p>'; return; }
+  el.innerHTML = `
+    <div class="detail-row"><div class="detail-label">Name</div><div class="detail-val">${user.first} ${user.last||''}</div></div>
+    <div class="detail-row"><div class="detail-label">Email</div><div class="detail-val">${user.email||'—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Student ID</div><div class="detail-val">${user.roll||'—'}</div></div>
+    <div class="detail-row"><div class="detail-label">Avatar</div><div class="detail-val" style="font-size:22px">${user.avatar||'🧑‍🎓'}</div></div>
+    <div class="detail-row"><div class="detail-label">Joined</div><div class="detail-val">${user.joined?new Date(user.joined).toLocaleDateString():'—'}</div></div>`;
+}
+
+function logOut() {
+  if (!confirm('Sign out of WellnessConnect?')) return;
+  localStorage.removeItem('wc_user');
+  window.location.href = 'register.html';
+}
+
+/* ── MODAL CLOSE ── */
+document.getElementById('detailModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('detailModal')) e.target.style.display = 'none';
+});
+
+/* ── PARTICLES ── */
+(function(){
+  const c=document.getElementById('particles'); if(!c)return;
+  const ctx=c.getContext('2d'); let W,H,dots=[];
+  function resize(){ W=c.width=window.innerWidth; H=c.height=window.innerHeight; }
+  resize(); window.addEventListener('resize',resize);
+  for(let i=0;i<50;i++) dots.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:Math.random()*1.3+0.4,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,a:Math.random()*.4+.08});
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    dots.forEach(d=>{d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(124,109,250,${d.a})`;ctx.fill();});
+    for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.strokeStyle=`rgba(124,109,250,${.07*(1-dist/100)})`;ctx.lineWidth=.7;ctx.stroke();}}
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

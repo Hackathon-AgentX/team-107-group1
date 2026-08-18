@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WellnessConnect — Wellness Resources</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 24px 60px; position: relative; z-index: 1; }
+    .page-hero  { text-align: center; margin-bottom: 44px; }
+    .page-hero h1 { font-size: clamp(28px,4vw,44px); font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .page-hero p  { font-size: 16px; color: var(--muted); max-width: 520px; margin: 0 auto 28px; line-height: 1.7; }
+    .search-bar { display: flex; justify-content: center; margin-bottom: 28px; }
+    .search-input {
+      width: 100%; max-width: 440px; padding: 13px 20px;
+      background: var(--surface); border: 1.5px solid var(--border2);
+      border-radius: 30px; font-family: var(--font); font-size: 14px;
+      color: var(--text); outline: none; transition: all .22s;
+    }
+    .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light), 0 0 20px var(--primary-glow); }
+    .search-input::placeholder { color: var(--light); }
+    .res-count { text-align: center; font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+<canvas id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
+
+<header class="header" id="header">
+  <div class="container nav-container">
+    <a href="index.html" class="logo" style="text-decoration:none">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" width="40" height="40">
+          <circle cx="20" cy="20" r="20" fill="#4f7dff"/>
+          <path d="M20 10 C14 10 10 14.5 10 19.5 C10 25 14 28 20 33 C26 28 30 25 30 19.5 C30 14.5 26 10 20 10Z" fill="white" opacity="0.9"/>
+          <rect x="18.5" y="15" width="3" height="9" rx="1.5" fill="#4f7dff"/>
+          <rect x="15" y="18.5" width="10" height="3" rx="1.5" fill="#4f7dff"/>
+        </svg>
+      </div>
+      <div class="logo-text"><span class="logo-main">WellnessConnect</span><span class="logo-sub">Student Health Assistant</span></div>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html" class="nav-link">Chat</a>
+      <a href="resources.html" class="nav-link active">Resources</a>
+      <a href="index.html" class="nav-link">Book</a>
+      <a href="helplines.html" class="nav-link">Helplines</a>
+      <a href="ai-assistant.html" class="nav-link">🤖 AI Chat</a>
+      <a href="meal-plan.html" class="nav-link">🥗 Meal Plan</a>
+      <a href="wellness-dashboard.html" class="nav-link">📊 Dashboard</a>
+    </nav>
+    <div class="nav-right">
+      <a href="register.html" class="register-nav-btn">✨ Account</a>
+      <button class="emergency-btn" onclick="window.location.href='helplines.html'">🆘 Emergency</button>
+    </div>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <div class="page-hero">
+    <div class="hero-badge" style="display:inline-flex;margin-bottom:18px">📚 Evidence-Based Wellness Knowledge</div>
+    <h1>Wellness <span class="gradient-text">Knowledge Base</span></h1>
+    <p>Vetted, evidence-based articles on student health & wellbeing. All information is sourced from recognised health organisations.</p>
+  </div>
+
+  <div class="search-bar">
+    <input class="search-input" type="text" id="searchInput" placeholder="🔍 Search articles… e.g. anxiety, sleep, nutrition" oninput="filterResources()"/>
+  </div>
+
+  <div class="resources-filter">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All</button>
+    <button class="filter-btn" data-filter="mental" onclick="setFilter('mental',this)">Mental Health</button>
+    <button class="filter-btn" data-filter="physical" onclick="setFilter('physical',this)">Physical</button>
+    <button class="filter-btn" data-filter="lifestyle" onclick="setFilter('lifestyle',this)">Lifestyle</button>
+    <button class="filter-btn" data-filter="crisis" onclick="setFilter('crisis',this)">Crisis</button>
+  </div>
+
+  <div class="res-count" id="resCount"></div>
+  <div class="resources-grid" id="resourcesGrid"></div>
+</div>
+
+<!-- RESOURCE MODAL -->
+<div class="modal-overlay" id="resourceModal" style="display:none">
+  <div class="modal modal-large">
+    <button class="modal-close" onclick="document.getElementById('resourceModal').style.display='none'">✕</button>
+    <div id="resourceModalContent"></div>
+  </div>
+</div>
+
+<footer class="footer" style="position:relative;z-index:1">
+  <div class="footer-bottom">
+    <p>© 2025 WellnessConnect · <a href="index.html">Home</a> · <a href="dashboard.html">My Dashboard</a> · Confidential & Secure</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+  let activeFilter = 'all';
+
+  function setFilter(f, btn) {
+    activeFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterResources();
+  }
+
+  function filterResources() {
+    const q = (document.getElementById('searchInput').value || '').toLowerCase();
+    const grid = document.getElementById('resourcesGrid');
+    const count = document.getElementById('resCount');
+    grid.innerHTML = '';
+    let shown = 0;
+    Object.entries(KNOWLEDGE_BASE).forEach(([key, item]) => {
+      if (activeFilter !== 'all' && item.category !== activeFilter) return;
+      if (q && !item.title.toLowerCase().includes(q) && !item.desc.toLowerCase().includes(q) && !item.source.toLowerCase().includes(q)) return;
+      shown++;
+      const card = document.createElement('div');
+      card.className = 'resource-card';
+      card.innerHTML = `
+        <span class="resource-tag ${item.tag}">${item.tagLabel}</span>
+        <div class="resource-title">${item.title}</div>
+        <div class="resource-desc">${item.desc}</div>
+        <div class="resource-source">${item.source}</div>`;
+      card.addEventListener('click', () => openResourceModal(key));
+      grid.appendChild(card);
+    });
+    count.textContent = `Showing ${shown} article${shown !== 1 ? 's' : ''}`;
+  }
+
+  function openResourceModal(key) {
+    const item = KNOWLEDGE_BASE[key];
+    if (!item) return;
+    document.getElementById('resourceModalContent').innerHTML = `
+      <div class="rm-header">
+        <span class="resource-tag ${item.tag}" style="position:relative">${item.tagLabel}</span>
+        <div class="rm-title" style="margin-top:10px">${item.title}</div>
+        <div class="rm-meta"><span class="rm-source">${item.source}</span></div>
+      </div>
+      <div class="rm-body">${item.body}</div>
+      <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+        <a href="index.html" class="btn btn-primary" style="font-size:13px;padding:9px 20px">💬 Ask Arogya about this</a>
+        <a href="index.html" onclick="sessionStorage.setItem('goTo','book')" class="btn btn-secondary" style="font-size:13px;padding:9px 20px">📅 Book Appointment</a>
+      </div>`;
+    document.getElementById('resourceModal').style.display = 'flex';
+  }
+
+  document.getElementById('resourceModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('resourceModal')) e.target.style.display = 'none';
+  });
+
+  filterResources();
+
+  // Particles
+  (function(){const c=document.getElementById('particles');if(!c)return;const ctx=c.getContext('2d');let W,H,dots=[];function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}resize();window.addEventListener('resize',resize);for(let i=0;i<50;i++)dots.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:Math.random()*1.3+0.4,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,a:Math.random()*.4+.08});function draw(){ctx.clearRect(0,0,W,H);dots.forEach(d=>{d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(124,109,250,${d.a})`;ctx.fill();});for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.strokeStyle=`rgba(124,109,250,${.07*(1-dist/100)})`;ctx.lineWidth=.7;ctx.stroke();}}requestAnimationFrame(draw);}draw();})();
+</script>
+</body>
+</html>

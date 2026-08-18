@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Arogya — AI Wellness Assistant · WellnessConnect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    /* ═══════════════════════════════════════════════════
+       AI-ASSISTANT PAGE — page-specific styles
+       All CSS variables from styles.css are available
+    ═══════════════════════════════════════════════════ */
+
+    /* ── Layout shell ────────────────────────────────── */
+    .ai-page {
+      display: flex;
+      height: calc(100vh - 68px);
+      margin-top: 68px;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Conversation Sidebar ────────────────────────── */
+    .conv-sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: var(--surface);
+      border-right: 1px solid var(--border2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.3s ease, width 0.3s ease;
+      z-index: 10;
+    }
+    .conv-sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .conv-sidebar-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .new-conv-btn {
+      padding: 5px 11px;
+      border-radius: 20px;
+      border: 1.5px solid var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .new-conv-btn:hover {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 14px var(--primary-glow);
+    }
+    .conv-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 8px;
+    }
+    .conv-empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12.5px;
+      padding: 40px 16px;
+      line-height: 1.6;
+    }
+    .conv-empty-icon { font-size: 32px; display: block; margin-bottom: 10px; opacity: 0.4; }
+    .conv-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+      border: 1px solid transparent;
+      margin-bottom: 3px;
+      position: relative;
+    }
+    .conv-item:hover { background: var(--surface2); border-color: var(--border); }
+    .conv-item.active {
+      background: var(--primary-light);
+      border-color: rgba(124,109,250,0.3);
+    }
+    .conv-item-body { flex: 1; min-width: 0; }
+    .conv-item-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .conv-item.active .conv-item-title { color: var(--primary); }
+    .conv-item-date {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .conv-delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--light);
+      font-size: 14px;
+      padding: 0 2px;
+      line-height: 1;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity var(--transition), color var(--transition);
+    }
+    .conv-item:hover .conv-delete-btn { opacity: 1; }
+    .conv-delete-btn:hover { color: var(--danger); }
+
+    /* ── Main chat column ────────────────────────────── */
+    .ai-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+      min-width: 0;
+    }
+
+    /* ── Chat Header ─────────────────────────────────── */
+    .ai-chat-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border2);
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .ai-chat-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(124,109,250,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .ai-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 18px var(--primary-glow);
+      position: relative;
+    }
+    .ai-avatar-inner { width: 28px; height: 28px; }
+    .ai-header-info { flex: 1; }
+    .ai-header-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .ai-header-sub {
+      font-size: 11.5px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .ai-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+    .ai-mode-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid rgba(124,109,250,0.3);
+      letter-spacing: 0.2px;
+    }
+    .ai-mode-badge.offline {
+      background: rgba(88,96,130,0.15);
+      color: var(--muted);
+      border-color: var(--border2);
+    }
+    .ai-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ai-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 13px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text2);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all var(--transition);
+    }
+    .ai-action-btn:hover { background: var(--surface3); border-color: var(--border2); color: var(--text); }
+    .ai-action-btn.save:hover { border-color: rgba(52,211,153,0.4); color: var(--success); background: rgba(52,211,153,0.08); }
+    .ai-action-btn.clear:hover { border-color: rgba(248,113,113,0.4); color: var(--danger); background: rgba(248,113,113,0.08); }
+    .sidebar-toggle-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border2);
+      background: var(--surface2);
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 16px;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+    .sidebar-toggle-btn:hover { background: var(--surface3); color: var(--text); }
+
+    /* ── Messages area ───────────────────────────────── */
+    .ai-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      scroll-behavior: smooth;
+    }
+
+    /* ── Welcome screen ──────────────────────────────── */
+    .ai-welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px 20px;
+      text-align: center;
+      animation: fadeSlideUp 0.5s ease;
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .welcome-emoji {
+      font-size: 64px;
+      line-height: 1;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 20px rgba(124,109,250,0.5));
+      animation: floatEmoji 3.5s ease-in-out infinite;
+    }
+    @keyframes floatEmoji {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+    .welcome-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .welcome-sub {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 480px;
+      line-height: 1.65;
+      margin-bottom: 28px;
+    }
+    .welcome-chips {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 720px;
+    }
+    .welcome-chip {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border2);
+      background: var(--surface);
+      color: var(--text2);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font);
+      text-align: left;
+      line-height: 1.4;
+      transition: all var(--transition);
+    }
+    .welcome-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--primary-glow);
+    }
+
+    /* ── Message bubbles ─────────────────────────────── */
+    .ai-msg-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      animation: msgIn 0.25s ease;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .ai-msg-group.user { align-items: flex-end; }
+    .ai-msg-group.bot  { align-items: flex-start; }
+
+    .ai-msg-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .ai-msg-group.user .ai-msg-row { flex-direction: row-reverse; }
+
+    .ai-msg-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .ai-bubble {
+      max-width: 72%;
+      padding: 13px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.65;
+      position: relative;
+    }
+    .ai-bubble.user {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      border-bottom-right-radius: 5px;
+      box-shadow: 0 4px 20px var(--primary-glow);
+    }
+    .ai-bubble.bot {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border2);
+      border-bottom-left-radius: 5px;
+      box-shadow: var(--shadow);
+    }
+    .ai-bubble.bot strong { color: var(--text); }
+    .ai-bubble.bot em { color: var(--muted); }
+    .ai-bubble.bot ul { padding-left: 18px; margin-top: 6px; }
+    .ai-bubble.bot li { margin: 3px 0; color: var(--text2); }
+    .ai-bubble.bot p + p { margin-top: 8px; }
+
+    .ai-msg-citation {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 8px;
+      background: rgba(124,109,250,0.07);
+      border-left: 2px solid rgba(124,109,250,0.3);
+      border-radius: 0 4px 4px 0;
+      margin-top: 6px;
+      width: fit-content;
+    }
+    .ai-msg-time {
+      font-size: 10.5px;
+      color: var(--light);
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+    .ai-msg-group.user .ai-msg-time { text-align: right; }
+
+    /* ── Contextual chips after response ─────────────── */
+    .ctx-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 8px;
+    }
+    .ctx-chip {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text2);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all var(--transition);
+    }
+    .ctx-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* ── Typing indicator ────────────────────────────── */
+    .ai-typing {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 0;
+    }
+    .ai-typing-text {
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .ai-typing-dots { display: flex; gap: 4px; }
+    .ai-typing-dots span {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: bounce 1.4s infinite;
+      opacity: 0.6;
+    }
+    .ai-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    /* ── Meal plan progress ──────────────────────────── */
+    .meal-progress {
+      display: none;
+      background: var(--surface);
+      border: 1px solid rgba(124,109,250,0.25);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+    .meal-progress-label {
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+    .meal-progress-bar {
+      height: 4px;
+      border-radius: 4px;
+      background: var(--surface3);
+      overflow: hidden;
+    }
+    .meal-progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transition: width 0.4s ease;
+    }
+
+    /* ── Input area ──────────────────────────────────── */
+    .ai-input-wrap {
+      padding: 14px 20px 16px;
+      background: var(--surface);
+      border-top: 1px solid var(--border2);
+      flex-shrink: 0;
+    }
+    .ai-input-inner {
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      border-radius: var(--radius-lg);
+      padding: 10px 14px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .ai-input-inner:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+    .ai-textarea {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.55;
+      resize: none;
+      min-height: 22px;
+      max-height: 96px;
+      overflow-y: auto;
+    }
+    .ai-textarea::placeholder { color: var(--light); }
+    .ai-input-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .ai-send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+    .ai-send-btn:hover { transform: scale(1.08); box-shadow: 0 6px 22px var(--primary-glow); }
+    .ai-send-btn:active { transform: scale(0.94); }
+    .ai-send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .ai-mic-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border2);
+      background: var(--surface3);
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+    .ai-mic-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .ai-mic-btn.listening { background: rgba(248,113,113,0.15); border-color: var(--danger); color: var(--danger); animation: micPulse 1.2s ease-in-out infinite; }
+    .ai-input-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding: 0 2px;
+    }
+    .ai-input-hint {
+      font-size: 11.5px;
+      color: var(--light);
+    }
+    .ai-char-counter {
+      font-size: 11.5px;
+      color: var(--light);
+    }
+    .ai-char-counter.warn { color: var(--warning); }
+    .ai-char-counter.over { color: var(--danger); font-weight: 600; }
+
+    /* ── Meal plan save button ───────────────────────── */
+    .save-meal-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(52,211,153,0.3);
+      background: rgba(52,211,153,0.08);
+      color: var(--success);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all var(--transition);
+    }
+    .save-meal-btn:hover { background: rgba(52,211,153,0.15); border-color: var(--success); }
+
+    /* ── Sidebar mobile drawer ───────────────────────── */
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9;
+    }
+    .sidebar-backdrop.open { display: block; }
+
+    /* ── Mobile nav override ─────────────────────────── */
+    .mobile-nav { display: none; }
+    .mobile-nav.open { display: block; }
+
+    /* ══════════════════════════════════════════════════
+       Responsive
+    ══════════════════════════════════════════════════ */
+    @media (max-width: 960px) {
+      .welcome-chips { grid-template-columns: repeat(2, 1fr); }
+      .ai-bubble { max-width: 85%; }
+    }
+    @media (max-width: 768px) {
+      .conv-sidebar {
+        position: fixed;
+        top: 68px;
+        left: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        z-index: 10;
+        box-shadow: var(--shadow-lg);
+      }
+      .conv-sidebar.open {
+        transform: translateX(0);
+      }
+      .sidebar-toggle-btn { display: flex; }
+      .ai-chat-header { padding: 12px 16px; gap: 10px; }
+      .ai-action-btn span { display: none; }
+      .ai-action-btn { padding: 7px 10px; }
+      .ai-messages { padding: 20px 14px; }
+      .ai-input-wrap { padding: 10px 12px 12px; }
+      .welcome-chips { grid-template-columns: 1fr 1fr; }
+      .welcome-title { font-size: 18px; }
+    }
+    @media (max-width: 480px) {
+      .welcome-chips { grid-template-columns: 1fr; }
+      .ai-bubble { max-width: 92%; }
+      .ai-header-actions .save { display: none; }
+    }
+  </style>
+</head>
+<body>
+<canvas id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
+
+<!-- ══════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════ -->
+<header class="header" id="header">
+  <div class="container nav-container">
+    <a href="index.html" class="logo" style="text-decoration:none">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+          <circle cx="20" cy="20" r="20" fill="#4f7dff"/>
+          <path d="M20 10 C14 10 10 14.5 10 19.5 C10 25 14 28 20 33 C26 28 30 25 30 19.5 C30 14.5 26 10 20 10Z" fill="white" opacity="0.9"/>
+          <rect x="18.5" y="15" width="3" height="9" rx="1.5" fill="#4f7dff"/>
+          <rect x="15" y="18.5" width="10" height="3" rx="1.5" fill="#4f7dff"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-main">WellnessConnect</span>
+        <span class="logo-sub">Student Health Assistant</span>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html" class="nav-link">Chat</a>
+      <a href="resources.html" class="nav-link">Resources</a>
+      <a href="index.html" class="nav-link">Book</a>
+      <a href="helplines.html" class="nav-link">Helplines</a>
+      <a href="ai-assistant.html" class="nav-link active">🤖 AI Chat</a>
+      <a href="meal-plan.html" class="nav-link">🥗 Meal Plan</a>
+      <a href="wellness-dashboard.html" class="nav-link">📊 Dashboard</a>
+    </nav>
+    <div class="nav-right">
+      <a href="register.html" class="register-nav-btn">✨ Register / Login</a>
+      <button class="emergency-btn" onclick="window.location.href='helplines.html'">🆘 Emergency</button>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav">
+  <div style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:98" onclick="closeMobileNav()"></div>
+  <div class="mobile-nav-panel">
+    <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+    <a href="index.html" class="mobile-nav-link">Chat</a>
+    <a href="resources.html" class="mobile-nav-link">Resources</a>
+    <a href="index.html#book" class="mobile-nav-link">Book</a>
+    <a href="helplines.html" class="mobile-nav-link">Helplines</a>
+    <a href="dashboard.html" class="mobile-nav-link">My Dashboard</a>
+    <a href="ai-assistant.html" class="mobile-nav-link" style="color:var(--primary)">✨ AI Assistant</a>
+    <a href="register.html" class="mobile-nav-link" style="color:var(--primary)">Register / Login</a>
+    <a href="helplines.html" class="mobile-nav-link" style="color:var(--danger)">🆘 Emergency</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TWO-COLUMN LAYOUT
+══════════════════════════════════════════════ -->
+<div class="ai-page">
+
+  <!-- Backdrop for mobile sidebar -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+  <!-- ── LEFT SIDEBAR ─────────────────────────── -->
+  <aside class="conv-sidebar" id="convSidebar">
+    <div class="conv-sidebar-header">
+      <span class="conv-sidebar-title">💬 Conversations</span>
+      <button class="new-conv-btn" onclick="startNewConversation()">+ New</button>
+    </div>
+    <div class="conv-list" id="convList">
+      <!-- Populated by JS -->
+    </div>
+  </aside>
+
+  <!-- ── MAIN CHAT AREA ────────────────────────── -->
+  <div class="ai-main">
+
+    <!-- Chat Header -->
+    <div class="ai-chat-header">
+      <button class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()" title="Conversations">☰</button>
+      <div class="ai-avatar">
+        <svg class="ai-avatar-inner" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 6 C12 6 6 12 6 19 C6 27 12 30 20 36 C28 30 34 27 34 19 C34 12 28 6 20 6Z" fill="white" opacity="0.9"/>
+          <rect x="18.5" y="12" width="3" height="10" rx="1.5" fill="#7c6dfa"/>
+          <rect x="13" y="17" width="14" height="3" rx="1.5" fill="#7c6dfa"/>
+        </svg>
+      </div>
+      <div class="ai-header-info">
+        <div class="ai-header-name">Arogya</div>
+        <div class="ai-header-sub">
+          <span class="ai-status-dot"></span>
+          AI Wellness Assistant · Powered by Gemini
+        </div>
+      </div>
+      <div class="ai-mode-badge" id="aiModeBadge">✨ AI Mode</div>
+      <div class="ai-header-actions">
+        <button class="ai-action-btn clear" onclick="clearAIChat()" title="Clear chat">🗑️ <span>Clear</span></button>
+        <button class="ai-action-btn save" onclick="saveConversation()" title="Save to sidebar">💾 <span>Save</span></button>
+      </div>
+    </div>
+
+    <!-- Meal plan progress bar -->
+    <div class="meal-progress" id="mealProgress">
+      <div class="meal-progress-label" id="mealProgressLabel">🍽️ Meal Plan Setup — Step 1/5</div>
+      <div class="meal-progress-bar">
+        <div class="meal-progress-fill" id="mealProgressFill" style="width:20%"></div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="ai-messages" id="aiMessages">
+
+      <!-- Welcome screen -->
+      <div class="ai-welcome" id="aiWelcome">
+        <div class="welcome-emoji">🌿</div>
+        <div class="welcome-title">Hi! I'm your Wellness Connect Assistant.</div>
+        <div class="welcome-sub">I can help you understand general wellness topics, prepare healthy meal ideas, find suitable wellness services, and help you manage your appointments. What would you like help with today?</div>
+        <div class="welcome-chips">
+          <button class="welcome-chip" onclick="sendChip(this)">🥗 Create a healthy meal plan for me</button>
+          <button class="welcome-chip" onclick="sendChip(this)">🌅 What should I eat for a balanced breakfast?</button>
+          <button class="welcome-chip" onclick="sendChip(this)">✅ Help me build healthy daily habits</button>
+          <button class="welcome-chip" onclick="sendChip(this)">📅 Show my upcoming appointments</button>
+          <button class="welcome-chip" onclick="sendChip(this)">💆 Help me prepare for my appointment</button>
+          <button class="welcome-chip" onclick="sendChip(this)">🏥 What wellness services are available?</button>
+          <button class="welcome-chip" onclick="sendChip(this)">🍎 Give me some healthy snack ideas</button>
+          <button class="welcome-chip" onclick="sendChip(this)">🗓️ Create a weekly wellness routine</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Typing indicator (outside messages so it stays visible) -->
+    <div class="ai-typing" id="aiTyping" style="display:none;padding:6px 24px 2px;">
+      <div class="ai-msg-avatar" style="width:26px;height:26px;font-size:12px">🌿</div>
+      <span class="ai-typing-text">Arogya is thinking…</span>
+      <div class="ai-typing-dots"><span></span><span></span><span></span></div>
+    </div>
+
+    <!-- Input area -->
+    <div class="ai-input-wrap">
+      <div class="ai-input-inner">
+        <textarea
+          id="aiInput"
+          class="ai-textarea"
+          rows="1"
+          placeholder="Ask Arogya anything about wellness, nutrition, appointments…"
+          onkeydown="handleAIKey(event)"
+          oninput="handleAIInput()"
+          maxlength="800"
+        ></textarea>
+        <div class="ai-input-actions">
+          <button class="ai-mic-btn" id="aiMicBtn" onclick="toggleAIMic()" title="Voice input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+              <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+              <path d="M5 10a7 7 0 0 0 14 0"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+          </button>
+          <button class="ai-send-btn" id="aiSendBtn" onclick="sendAIMessage()" title="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="ai-input-footer">
+        <span class="ai-input-hint">Press Enter to send · Shift+Enter for new line</span>
+        <span class="ai-char-counter" id="aiCharCounter">800 left</span>
+      </div>
+    </div>
+
+  </div><!-- /ai-main -->
+</div><!-- /ai-page -->
+
+<!-- ══════════════════════════════════════════════
+     TRIAGE ALERT (reused from main)
+══════════════════════════════════════════════ -->
+<div class="triage-alert" id="aiTriageAlert" style="display:none">
+  <div class="triage-content">
+    <div class="triage-icon">⚠️</div>
+    <div>
+      <strong id="aiTriageTitle"></strong>
+      <p id="aiTriageBody"></p>
+    </div>
+    <button class="triage-close" onclick="document.getElementById('aiTriageAlert').style.display='none'">✕</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <div class="logo" style="margin-bottom:14px">
+        <div class="logo-icon">
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+            <circle cx="20" cy="20" r="20" fill="#4f7dff"/>
+            <path d="M20 10 C14 10 10 14.5 10 19.5 C10 25 14 28 20 33 C26 28 30 25 30 19.5 C30 14.5 26 10 20 10Z" fill="white" opacity="0.9"/>
+            <rect x="18.5" y="15" width="3" height="9" rx="1.5" fill="#4f7dff"/>
+            <rect x="15" y="18.5" width="10" height="3" rx="1.5" fill="#4f7dff"/>
+          </svg>
+        </div>
+        <span class="logo-main">WellnessConnect</span>
+      </div>
+      <p class="footer-tagline">Compassionate, evidence-based student wellness guidance.</p>
+      <div class="footer-langs"><span>English</span> · <span>हिन्दी</span> · <span>मराठी</span></div>
+    </div>
+    <div class="footer-links">
+      <h5>Navigation</h5>
+      <a href="index.html">Chat Assistant</a>
+      <a href="resources.html">Resources</a>
+      <a href="index.html#book">Book Appointment</a>
+      <a href="helplines.html">Helplines</a>
+      <a href="dashboard.html">My Dashboard</a>
+      <a href="ai-assistant.html" style="color:var(--primary)">✨ AI Assistant</a>
+    </div>
+    <div class="footer-links">
+      <h5>Disclaimers</h5>
+      <p>This tool is for informational purposes only.</p>
+      <p>Not a substitute for professional medical or mental health advice.</p>
+      <p>All bookings are handled by campus health services.</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 WellnessConnect · All rights reserved · Confidential &amp; Secure</p>
+  </div>
+</footer>
+
+<!-- Load app.js (provides: callGeminiAPI, chatHistory, streamText, formatText,
+     SYSTEM_INSTRUCTION, TRIAGE_URGENT, LOCAL_FALLBACK, getLocalFallback,
+     classifyLocal, GEMINI_API_KEY, etc.) -->
+<script src="app.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   AI-ASSISTANT PAGE SCRIPT
+   Depends on globals from app.js:
+     callGeminiAPI, chatHistory, streamText, formatText,
+     TRIAGE_URGENT, LOCAL_FALLBACK, getLocalFallback, classifyLocal
+══════════════════════════════════════════════════════════════════════ */
+
+'use strict';
+
+/* ── State ───────────────────────────────────────────────────────── */
+let aiIsTyping      = false;
+let activeConvId    = null;
+let localConvMsgs   = [];   // [{role, text, time}]
+const MAX_CHARS     = 800;
+
+/* Meal-plan state machine */
+const MEAL_STEPS = ['idle','asking_age','asking_goal','asking_diet','asking_allergies','asking_schedule','generating','done'];
+let mealPlanState = {
+  step: 'idle',
+  age: '', goal: '', diet: '', allergies: '', schedule: '',
+  lastPlan: ''
+};
+
+/* ── Helpers ─────────────────────────────────────────────────────── */
+function nowTime() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+function genId() { return 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[d.getMonth()] + ' ' + d.getDate();
+}
+
+/* ── Conversation storage ────────────────────────────────────────── */
+function loadConversations() {
+  try { return JSON.parse(localStorage.getItem('wc_conversations') || '[]'); } catch(e) { return []; }
+}
+function saveConversations(arr) {
+  try { localStorage.setItem('wc_conversations', JSON.stringify(arr)); } catch(e) {}
+}
+
+function renderConvList() {
+  const list   = document.getElementById('convList');
+  const convs  = loadConversations();
+  if (!convs.length) {
+    list.innerHTML = `<div class="conv-empty">
+      <span class="conv-empty-icon">💬</span>
+      No conversations yet.<br>Start chatting to save one!
+    </div>`;
+    return;
+  }
+  list.innerHTML = convs.map(c => `
+    <div class="conv-item ${c.id === activeConvId ? 'active' : ''}" data-id="${c.id}" onclick="loadConversation('${c.id}')">
+      <div class="conv-item-body">
+        <div class="conv-item-title">${escHtml(c.title)}</div>
+        <div class="conv-item-date">${formatDate(c.date)}</div>
+      </div>
+      <button class="conv-delete-btn" title="Delete" onclick="deleteConversation(event,'${c.id}')">×</button>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function saveConversation() {
+  if (!localConvMsgs.length) return;
+  const convs = loadConversations();
+  const firstUserMsg = localConvMsgs.find(m => m.role === 'user');
+  const title = firstUserMsg
+    ? firstUserMsg.text.slice(0, 42) + (firstUserMsg.text.length > 42 ? '…' : '')
+    : 'Conversation';
+
+  if (activeConvId) {
+    const idx = convs.findIndex(c => c.id === activeConvId);
+    if (idx > -1) {
+      convs[idx].messages = [...localConvMsgs];
+      convs[idx].date = new Date().toISOString();
+      convs[idx].title = title;
+      saveConversations(convs);
+      renderConvList();
+      flashSaved();
+      return;
+    }
+  }
+
+  const newConv = {
+    id: genId(),
+    title,
+    date: new Date().toISOString(),
+    messages: [...localConvMsgs]
+  };
+  convs.unshift(newConv);
+  saveConversations(convs);
+  activeConvId = newConv.id;
+  try { localStorage.setItem('wc_active_conversation', activeConvId); } catch(e) {}
+  renderConvList();
+  flashSaved();
+}
+
+function flashSaved() {
+  const btn = document.querySelector('.ai-action-btn.save');
+  if (!btn) return;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '✅ <span>Saved!</span>';
+  btn.style.color = 'var(--success)';
+  setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+}
+
+function loadConversation(id) {
+  const convs = loadConversations();
+  const conv = convs.find(c => c.id === id);
+  if (!conv) return;
+  activeConvId = id;
+  try { localStorage.setItem('wc_active_conversation', id); } catch(e) {}
+  localConvMsgs = [...(conv.messages || [])];
+  chatHistory = []; // reset Gemini context
+  const container = document.getElementById('aiMessages');
+  document.getElementById('aiWelcome').style.display = 'none';
+  // Rebuild messages DOM
+  container.querySelectorAll('.ai-msg-group').forEach(el => el.remove());
+  localConvMsgs.forEach(m => {
+    if (m.role === 'user') {
+      renderUserBubble(m.text, m.time || '');
+    } else {
+      renderBotBubble(m.text, '✨ Arogya AI · General info only — not a diagnosis', m.time || '', false);
+    }
+    // Rebuild chatHistory from stored messages
+    chatHistory.push({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] });
+  });
+  container.scrollTop = container.scrollHeight;
+  renderConvList();
+  if (window.innerWidth <= 768) closeSidebar();
+}
+
+function deleteConversation(e, id) {
+  e.stopPropagation();
+  const convs = loadConversations().filter(c => c.id !== id);
+  saveConversations(convs);
+  if (activeConvId === id) {
+    activeConvId = null;
+    try { localStorage.removeItem('wc_active_conversation'); } catch(e2) {}
+  }
+  renderConvList();
+}
+
+function startNewConversation() {
+  activeConvId  = null;
+  localConvMsgs = [];
+  chatHistory   = [];
+  mealPlanState = { step:'idle', age:'', goal:'', diet:'', allergies:'', schedule:'', lastPlan:'' };
+  hideMealProgress();
+  try { localStorage.removeItem('wc_active_conversation'); } catch(e) {}
+  const container = document.getElementById('aiMessages');
+  container.querySelectorAll('.ai-msg-group').forEach(el => el.remove());
+  document.getElementById('aiWelcome').style.display = 'flex';
+  document.getElementById('aiWelcome').style.flexDirection = 'column';
+  document.getElementById('aiWelcome').style.alignItems = 'center';
+  renderConvList();
+  if (window.innerWidth <= 768) closeSidebar();
+}
+
+/* ── Sidebar toggle (mobile) ─────────────────────────────────────── */
+function toggleSidebar() {
+  const sidebar   = document.getElementById('convSidebar');
+  const backdrop  = document.getElementById('sidebarBackdrop');
+  sidebar.classList.toggle('open');
+  backdrop.classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('convSidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('open');
+}
+
+/* ── Render bubbles ──────────────────────────────────────────────── */
+function renderUserBubble(text, time) {
+  const container = document.getElementById('aiMessages');
+  const group = document.createElement('div');
+  group.className = 'ai-msg-group user';
+  group.innerHTML = `
+    <div class="ai-msg-row">
+      <div class="ai-bubble user">${escHtml(text)}</div>
+    </div>
+    <div class="ai-msg-time">${time || nowTime()}</div>
+  `;
+  container.appendChild(group);
+  container.scrollTop = container.scrollHeight;
+  return group;
+}
+
+function renderBotBubble(text, citation, time, streaming) {
+  const container = document.getElementById('aiMessages');
+  const group = document.createElement('div');
+  group.className = 'ai-msg-group bot';
+  const t = time || nowTime();
+  const cit = citation || '✨ Arogya AI · General info only — not a diagnosis';
+  group.innerHTML = `
+    <div class="ai-msg-row">
+      <div class="ai-msg-avatar">🌿</div>
+      <div class="ai-bubble bot" id="streamTarget_${Date.now()}">
+        <p>${streaming ? '' : aiFmt(text)}</p>
+        <div class="ai-msg-citation">${escHtml(cit)}</div>
+      </div>
+    </div>
+    <div class="ai-msg-time">${t}</div>
+  `;
+  container.appendChild(group);
+  container.scrollTop = container.scrollHeight;
+  return group;
+}
+
+function aiFmt(text) {
+  return formatText ? formatText(text) : text;
+}
+
+/* ── Contextual chips ────────────────────────────────────────────── */
+function showContextChips(group, chips) {
+  if (!chips || !chips.length) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'ctx-chips';
+  chips.forEach(label => {
+    const btn = document.createElement('button');
+    btn.className = 'ctx-chip';
+    btn.textContent = label;
+    btn.onclick = () => {
+      wrap.remove();
+      sendAIText(label);
+    };
+    wrap.appendChild(btn);
+  });
+  // Append after the bot bubble row
+  const row = group.querySelector('.ai-msg-row');
+  if (row) row.after(wrap);
+  else group.appendChild(wrap);
+}
+
+function getContextChips(text) {
+  const t = text.toLowerCase();
+  if (/meal|breakfast|lunch|dinner|snack|nutrition|diet|food|eat/i.test(t))
+    return ['Modify this plan','More breakfast ideas','Snack alternatives','Daily meal schedule'];
+  if (/appointment|book|session|schedule|upcoming|slot/i.test(t))
+    return ['Book an appointment','View all appointments','Cancel an appointment'];
+  if (/wellness|habit|routine|exercise|sleep|mental|stress|meditation/i.test(t))
+    return ['Tell me more','What else can I do?','Related resources'];
+  return [];
+}
+
+/* ── Meal-plan state machine ─────────────────────────────────────── */
+const MEAL_QUESTIONS = {
+  asking_age: "To make your meal plan more accurate, what is your **age range**? (e.g. 18–22, 23–28, 29+)",
+  asking_goal: "Great! What is your **main wellness goal**?\n\n• 🏃 Lose weight\n• 💪 Build muscle / strength\n• ⚡ Improve energy & focus\n• 🩺 Manage a health condition\n• 🌱 Just eat healthier",
+  asking_diet: "Thanks! Do you follow any specific diet?\n\n• 🥦 Vegetarian\n• 🌿 Vegan\n• 🍗 Non-vegetarian\n• 🐟 Pescatarian\n• 🍚 No specific preference",
+  asking_allergies: "Almost there! Do you have any **food allergies or intolerances**? (e.g. gluten, dairy, nuts, soy — or type 'None' if all good)",
+  asking_schedule: "Last question — how many **meals per day** do you prefer?\n\n• 2 meals (intermittent fasting style)\n• 3 meals (breakfast, lunch, dinner)\n• 4–5 meals (smaller, frequent meals)"
+};
+
+function isMealPlanRequest(text) {
+  return /meal plan|diet plan|what (should|to) eat|plan (my )?meals|weekly (meal|food)|eating plan/i.test(text);
+}
+
+function showMealProgress(step) {
+  const stepMap = { asking_age:1, asking_goal:2, asking_diet:3, asking_allergies:4, asking_schedule:5 };
+  const n = stepMap[step] || 1;
+  document.getElementById('mealProgress').style.display = 'block';
+  document.getElementById('mealProgressLabel').textContent = `🍽️ Meal Plan Setup — Step ${n}/5`;
+  document.getElementById('mealProgressFill').style.width = (n * 20) + '%';
+}
+function hideMealProgress() {
+  document.getElementById('mealProgress').style.display = 'none';
+}
+
+async function handleMealFlow(userText) {
+  const state = mealPlanState;
+
+  if (state.step === 'idle' && isMealPlanRequest(userText)) {
+    state.step = 'asking_age';
+    showMealProgress('asking_age');
+    return MEAL_QUESTIONS.asking_age;
+  }
+
+  if (state.step === 'asking_age') {
+    state.age = userText;
+    state.step = 'asking_goal';
+    showMealProgress('asking_goal');
+    return MEAL_QUESTIONS.asking_goal;
+  }
+  if (state.step === 'asking_goal') {
+    state.goal = userText;
+    state.step = 'asking_diet';
+    showMealProgress('asking_diet');
+    return MEAL_QUESTIONS.asking_diet;
+  }
+  if (state.step === 'asking_diet') {
+    state.diet = userText;
+    state.step = 'asking_allergies';
+    showMealProgress('asking_allergies');
+    return MEAL_QUESTIONS.asking_allergies;
+  }
+  if (state.step === 'asking_allergies') {
+    state.allergies = userText;
+    state.step = 'asking_schedule';
+    showMealProgress('asking_schedule');
+    return MEAL_QUESTIONS.asking_schedule;
+  }
+  if (state.step === 'asking_schedule') {
+    state.schedule = userText;
+    state.step = 'generating';
+    hideMealProgress();
+    const prompt = `Create a detailed, practical 7-day meal plan for a student in India with these details:
+Age range: ${state.age}
+Goal: ${state.goal}
+Diet type: ${state.diet}
+Allergies/intolerances: ${state.allergies}
+Meals per day: ${state.schedule}
+
+Format as:
+- A brief intro (2 sentences)
+- Day-by-day table (Mon–Sun) with meal names
+- 3 practical nutrition tips
+- A reminder this is general wellness info, not medical/dietitian advice`;
+    return null; // signal to use Gemini for the final generation
+  }
+  return null;
+}
+
+function appendSaveMealBtn(group, planText) {
+  const btn = document.createElement('button');
+  btn.className = 'save-meal-btn';
+  btn.innerHTML = '📥 Save Meal Plan';
+  btn.onclick = () => {
+    try {
+      const plans = JSON.parse(localStorage.getItem('wc_meal_plans') || '[]');
+      plans.unshift({ id: genId(), date: new Date().toISOString(), plan: planText, meta: { ...mealPlanState } });
+      localStorage.setItem('wc_meal_plans', JSON.stringify(plans));
+      btn.innerHTML = '✅ Saved to My Plans!';
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+    } catch(e) { btn.innerHTML = '⚠️ Could not save'; }
+  };
+  const row = group.querySelector('.ai-bubble.bot');
+  if (row) row.appendChild(btn);
+}
+
+/* ── Appointment awareness ───────────────────────────────────────── */
+function isAppointmentQuery(text) {
+  return /appointment|booking|session|scheduled|my (next|upcoming)|when (is|do i)/i.test(text);
+}
+
+function getAppointmentContext() {
+  try {
+    const appts = JSON.parse(localStorage.getItem('wc_appointments') || '[]');
+    if (!appts.length) return 'The student has no upcoming appointments booked in WellnessConnect.';
+    const upcoming = appts.filter(a => new Date(a.date) >= new Date()).sort((a,b) => new Date(a.date) - new Date(b.date));
+    if (!upcoming.length) return 'The student has no upcoming appointments (all past).';
+    const lines = upcoming.slice(0,3).map(a =>
+      `- ${a.type || 'Appointment'} on ${a.date}${a.time ? ' at ' + a.time : ''}${a.concern ? ' for ' + a.concern : ''}`
+    );
+    return `The student has ${upcoming.length} upcoming appointment(s):\n${lines.join('\n')}`;
+  } catch(e) { return ''; }
+}
+
+/* ── Mode badge ──────────────────────────────────────────────────── */
+function setModeBadge(online) {
+  const badge = document.getElementById('aiModeBadge');
+  if (online) {
+    badge.textContent = '✨ AI Mode';
+    badge.className = 'ai-mode-badge';
+  } else {
+    badge.textContent = '📴 Offline Mode';
+    badge.className = 'ai-mode-badge offline';
+  }
+}
+
+/* ── Send a chip ─────────────────────────────────────────────────── */
+function sendChip(btn) {
+  const text = btn.textContent.trim();
+  document.getElementById('aiWelcome').style.display = 'none';
+  sendAIText(text);
+}
+
+/* ── Main send flow ──────────────────────────────────────────────── */
+async function sendAIMessage() {
+  const inp  = document.getElementById('aiInput');
+  const text = inp.value.trim();
+  if (!text || aiIsTyping) return;
+  inp.value = '';
+  inp.style.height = 'auto';
+  document.getElementById('aiCharCounter').textContent = MAX_CHARS + ' left';
+  document.getElementById('aiCharCounter').className = 'ai-char-counter';
+  sendAIText(text);
+}
+
+async function sendAIText(text) {
+  if (!text || aiIsTyping) return;
+  aiIsTyping = true;
+  setInputDisabled(true);
+
+  // Hide welcome screen
+  document.getElementById('aiWelcome').style.display = 'none';
+
+  // Render user bubble
+  const userTime = nowTime();
+  renderUserBubble(text, userTime);
+  localConvMsgs.push({ role: 'user', text, time: userTime });
+
+  // Show typing indicator
+  const typingEl = document.getElementById('aiTyping');
+  typingEl.style.display = 'flex';
+
+  // Scroll
+  const container = document.getElementById('aiMessages');
+  container.scrollTop = container.scrollHeight;
+
+  // ── Urgent triage ──
+  if (typeof TRIAGE_URGENT !== 'undefined' && TRIAGE_URGENT.some(k => text.toLowerCase().includes(k))) {
+    await new Promise(r => setTimeout(r, 600));
+    typingEl.style.display = 'none';
+    const crisisText = '🆘 It sounds like you may be in crisis. Please reach out immediately:\n\n• **iCall**: 9152987821\n• **Vandrevala Foundation**: 1860-2662-345\n• **Emergency**: 112\n\nYou don\'t have to face this alone. Trained professionals are available right now.';
+    const botTime = nowTime();
+    const group = renderBotBubble(crisisText, '🆘 Crisis Resources — Please Call Now', botTime, false);
+    localConvMsgs.push({ role: 'bot', text: crisisText, time: botTime });
+    autoSaveConv();
+    aiIsTyping = false;
+    setInputDisabled(false);
+    return;
+  }
+
+  // ── Meal plan flow ──
+  const mealFlowReply = await handleMealFlow(text);
+  if (mealFlowReply) {
+    await new Promise(r => setTimeout(r, 500));
+    typingEl.style.display = 'none';
+    const botTime = nowTime();
+    const group = renderBotBubble('', '✨ Arogya AI · General info only — not a diagnosis', botTime, true);
+    const streamEl = group.querySelector('.ai-bubble.bot p');
+    await aiStreamText(streamEl, mealFlowReply);
+    localConvMsgs.push({ role: 'bot', text: mealFlowReply, time: botTime });
+    autoSaveConv();
+    aiIsTyping = false;
+    setInputDisabled(false);
+    return;
+  }
+
+  // ── Build augmented prompt ──
+  let augmentedText = text;
+  if (isAppointmentQuery(text)) {
+    const ctx = getAppointmentContext();
+    augmentedText = `${text}\n\n[CONTEXT: ${ctx}]`;
+  }
+  if (mealPlanState.step === 'generating') {
+    // Use Gemini for full plan generation
+    mealPlanState.step = 'done';
+  }
+
+  // ── Try Gemini ──
+  let reply = null;
+  try {
+    reply = await callGeminiAPI(augmentedText);
+  } catch(e) { reply = null; }
+
+  typingEl.style.display = 'none';
+
+  if (reply) {
+    setModeBadge(true);
+    const botTime = nowTime();
+    const group = renderBotBubble('', '✨ Arogya AI · General info only — not a diagnosis', botTime, true);
+    const streamEl = group.querySelector('.ai-bubble.bot p');
+    await aiStreamText(streamEl, reply);
+    localConvMsgs.push({ role: 'bot', text: reply, time: botTime });
+    // Meal plan done → show save button
+    if (mealPlanState.step === 'done') {
+      mealPlanState.lastPlan = reply;
+      appendSaveMealBtn(group, reply);
+      mealPlanState.step = 'idle';
+    }
+    // Contextual chips
+    const chips = getContextChips(reply);
+    if (chips.length) showContextChips(group, chips);
+  } else {
+    // Local fallback
+    setModeBadge(false);
+    const localKey  = typeof classifyLocal === 'function' ? classifyLocal(text) : 'default';
+    const fallback  = typeof getLocalFallback === 'function' ? getLocalFallback(localKey) : 'I\'m here to help! 😊 Could you tell me more?';
+    // Push to chatHistory for context continuity
+    if (typeof chatHistory !== 'undefined') {
+      chatHistory.push({ role: 'user',  parts: [{ text }] });
+      chatHistory.push({ role: 'model', parts: [{ text: fallback }] });
+      if (chatHistory.length > 40) chatHistory = chatHistory.slice(-40);
+    }
+    const botTime = nowTime();
+    const group = renderBotBubble('', 'ℹ️ Offline mode — General info only, not a diagnosis', botTime, true);
+    const streamEl = group.querySelector('.ai-bubble.bot p');
+    await aiStreamText(streamEl, fallback);
+    localConvMsgs.push({ role: 'bot', text: fallback, time: botTime });
+    const chips = getContextChips(text + ' ' + fallback);
+    if (chips.length) showContextChips(group, chips);
+  }
+
+  autoSaveConv();
+  aiIsTyping = false;
+  setInputDisabled(false);
+  container.scrollTop = container.scrollHeight;
+}
+
+/* ── Auto-save after each exchange ──────────────────────────────── */
+function autoSaveConv() {
+  if (!localConvMsgs.length) return;
+  const convs = loadConversations();
+  const firstUser = localConvMsgs.find(m => m.role === 'user');
+  const title = firstUser
+    ? firstUser.text.slice(0,42) + (firstUser.text.length > 42 ? '…' : '')
+    : 'Conversation';
+  if (activeConvId) {
+    const idx = convs.findIndex(c => c.id === activeConvId);
+    if (idx > -1) {
+      convs[idx].messages = [...localConvMsgs];
+      convs[idx].date = new Date().toISOString();
+      saveConversations(convs);
+      renderConvList();
+      return;
+    }
+  }
+  const newConv = { id: genId(), title, date: new Date().toISOString(), messages: [...localConvMsgs] };
+  convs.unshift(newConv);
+  activeConvId = newConv.id;
+  try { localStorage.setItem('wc_active_conversation', activeConvId); } catch(e) {}
+  saveConversations(convs);
+  renderConvList();
+}
+
+/* ── Stream text (page-local, uses formatText from app.js) ───────── */
+async function aiStreamText(el, fullText) {
+  if (!el) return;
+  const container = document.getElementById('aiMessages');
+  const words = fullText.split(' ');
+  let built = '';
+  for (let i = 0; i < words.length; i++) {
+    built += (i > 0 ? ' ' : '') + words[i];
+    el.innerHTML = (typeof formatText === 'function' ? formatText(built) : built) + '<span class="cursor-blink">▌</span>';
+    container.scrollTop = container.scrollHeight;
+    await new Promise(r => setTimeout(r, 20 + Math.random() * 18));
+  }
+  el.innerHTML = typeof formatText === 'function' ? formatText(fullText) : fullText;
+  container.scrollTop = container.scrollHeight;
+}
+
+/* ── Clear chat ──────────────────────────────────────────────────── */
+function clearAIChat() {
+  if (!localConvMsgs.length) return;
+  localConvMsgs = [];
+  mealPlanState  = { step:'idle', age:'', goal:'', diet:'', allergies:'', schedule:'', lastPlan:'' };
+  hideMealProgress();
+  const container = document.getElementById('aiMessages');
+  container.querySelectorAll('.ai-msg-group').forEach(el => el.remove());
+  document.getElementById('aiWelcome').style.display = '';
+  document.getElementById('aiWelcome').style.flexDirection = 'column';
+  document.getElementById('aiWelcome').style.alignItems = 'center';
+  // Reset Gemini history for this page's context
+  if (typeof chatHistory !== 'undefined') chatHistory = [];
+}
+
+/* ── Input helpers ───────────────────────────────────────────────── */
+function handleAIKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAIMessage(); }
+}
+function handleAIInput() {
+  const inp = document.getElementById('aiInput');
+  inp.style.height = 'auto';
+  inp.style.height = Math.min(inp.scrollHeight, 96) + 'px';
+  const len = inp.value.length;
+  const left = MAX_CHARS - len;
+  const counter = document.getElementById('aiCharCounter');
+  counter.textContent = left + ' left';
+  counter.className = 'ai-char-counter' + (left < 100 ? ' warn' : '') + (left < 0 ? ' over' : '');
+}
+function setInputDisabled(disabled) {
+  document.getElementById('aiInput').disabled = disabled;
+  document.getElementById('aiSendBtn').disabled = disabled;
+  document.getElementById('aiMicBtn').disabled = disabled;
+  if (disabled) {
+    document.getElementById('aiInput').placeholder = 'Arogya is thinking…';
+  } else {
+    document.getElementById('aiInput').placeholder = 'Ask Arogya anything about wellness, nutrition, appointments…';
+  }
+}
+
+/* ── Microphone (mirrors app.js approach) ────────────────────────── */
+(function initAIMic() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micBtn = document.getElementById('aiMicBtn');
+  if (!SpeechRecognition) { if (micBtn) micBtn.style.display = 'none'; return; }
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-IN';
+  let listening = false;
+
+  window.toggleAIMic = function() {
+    if (listening) { recognition.stop(); } else { recognition.start(); }
+  };
+  recognition.onstart = function() {
+    listening = true;
+    micBtn.classList.add('listening');
+    micBtn.title = 'Listening… click to stop';
+    document.getElementById('aiInput').placeholder = '🎤 Listening…';
+  };
+  recognition.onresult = function(e) {
+    const inp = document.getElementById('aiInput');
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t; else interim += t;
+    }
+    inp.value = final || interim;
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 96) + 'px';
+  };
+  recognition.onend = function() {
+    listening = false;
+    micBtn.classList.remove('listening');
+    micBtn.title = 'Voice input';
+    document.getElementById('aiInput').placeholder = 'Ask Arogya anything about wellness, nutrition, appointments…';
+    const inp = document.getElementById('aiInput');
+    if (inp.value.trim()) sendAIMessage();
+  };
+  recognition.onerror = function(e) {
+    listening = false;
+    micBtn.classList.remove('listening');
+    micBtn.title = 'Voice input';
+    document.getElementById('aiInput').placeholder = 'Ask Arogya anything about wellness, nutrition, appointments…';
+  };
+})();
+
+/* ── Header scroll effect ────────────────────────────────────────── */
+window.addEventListener('scroll', () => {
+  const _hdr = document.getElementById('header');
+  if (_hdr) _hdr.classList.toggle('scrolled', window.scrollY > 20);
+});
+
+/* ── Hamburger (mobile nav) ──────────────────────────────────────── */
+const _hamb = document.getElementById('hamburger');
+if (_hamb) _hamb.addEventListener('click', () => {
+  const _mnav = document.getElementById('mobileNav');
+  if (_mnav) _mnav.classList.toggle('open');
+});
+function closeMobileNav() {
+  const _mn = document.getElementById('mobileNav');
+  if (_mn) _mn.classList.remove('open');
+}
+
+/* ── Init ────────────────────────────────────────────────────────── */
+(function init() {
+  renderConvList();
+
+  // Restore last active conversation if any
+  try {
+    const lastId = localStorage.getItem('wc_active_conversation');
+    if (lastId) {
+      const convs = loadConversations();
+      if (convs.find(c => c.id === lastId)) {
+        loadConversation(lastId);
+      }
+    }
+  } catch(e) {}
+
+  // Handle prefill from dashboard / other pages
+  try {
+    const pre = sessionStorage.getItem('wc_prefill');
+    if (pre) {
+      sessionStorage.removeItem('wc_prefill');
+      setTimeout(() => sendAIText(pre), 400);
+    }
+  } catch(e) {}
+
+  // Header scroll
+  window.addEventListener('scroll', () => {
+    const h = document.getElementById('header');
+    if (h) h.classList.toggle('scrolled', window.scrollY > 10);
+  });
+})();
+</script>
+</body>
+</html>
